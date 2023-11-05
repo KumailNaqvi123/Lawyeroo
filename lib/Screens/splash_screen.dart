@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:project/Screens/home_screen.dart';
+//import 'package:project/Screens/home_screen.dart';
 import 'package:project/Screens/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget
@@ -41,9 +41,9 @@ class _SplashScreenState extends State<SplashScreen>
   {
     return Scaffold(
       body:Container(
-        color: const Color(0x99F5CDD2),
+        color: const Color(0xFFD1C5C5),
         child: Center
-        (child:Image.asset('assets/images/lawyer.png', // Replace with your image
+        (child:Image.asset('assets/images/logo.png', // Replace with your image
             fit: BoxFit.contain, // Center the image within the container))
       ),
         ),
