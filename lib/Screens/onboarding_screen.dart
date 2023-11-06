@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:project/Screens/home_screen.dart';
 import 'package:project/Screens/login_page.dart';
 
 class MyOnboardingApp extends StatelessWidget {
