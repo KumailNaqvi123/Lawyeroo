@@ -32,13 +32,13 @@ class _LoginPageState extends State<LoginPage> {
               top: -screenHeight * 0.05,
               child: Image.asset(
                 'assets/images/ellipse1.png',
-                width: screenWidth * 0.35,
-                height: screenWidth * 0.35,
+                width: screenWidth * 0.30,
+                height: screenWidth * 0.30,
               ),
             ),
             Positioned(
-              left: screenWidth * -0.07, // Adjust this value to move the ellipse2
-              top: screenHeight * 0.05,
+              left: screenWidth * -0.07,
+              top: screenHeight * 0.03,
               child: Image.asset(
                 'assets/images/ellipse2.png',
                 width: screenWidth * 0.3,
@@ -55,12 +55,14 @@ class _LoginPageState extends State<LoginPage> {
                       controller: usernameController,
                       hintText: 'Username',
                       obscureText: false,
+                      borderRadius: 30.0, // Adjust the border radius
                     ),
                     SizedBox(height: screenHeight * 0.015),
                     MyTextField(
                       controller: passwordController,
                       hintText: 'Password',
                       obscureText: true,
+                      borderRadius: 30.0, // Adjust the border radius
                     ),
                     SizedBox(height: screenHeight * 0.015),
                     Padding(
@@ -156,9 +158,41 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SquareTile(imagePath: 'lib/images/google.png'),
+                        ClipOval(
+                          child: Material(
+                            color: Color.fromARGB(255, 255, 255, 255), // Set the desired background color
+                            child: InkWell(
+                              onTap: () {
+                                // Handle Google button tap
+                              },
+                              child: SizedBox(
+                                width: 55, // Adjust the width
+                                height: 55, // Adjust the height
+                                child: Center(
+                                  child: Image.asset('lib/images/google.png'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                         SizedBox(width: screenWidth * 0.05),
-                        SquareTile(imagePath: 'lib/images/apple.png'),
+                        ClipOval(
+                          child: Material(
+                            color: Color.fromARGB(255, 255, 255, 255), // Set the desired background color
+                            child: InkWell(
+                              onTap: () {
+                                // Handle Apple button tap
+                              },
+                              child: SizedBox(
+                                width: 55, // Adjust the width
+                                height: 55, // Adjust the height
+                                child: Center(
+                                  child: Image.asset('lib/images/apple.png'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.05),
