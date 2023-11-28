@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: const Color(0xFFD1C5C5),
+        color: Color.fromARGB(255, 255, 255, 255),
         child: Center(
           child: FractionallySizedBox(
             widthFactor: 1, // Adjust the width factor as needed

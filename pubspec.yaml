@@ -62,6 +62,9 @@ flutter:
    - assets/images/logo.png
    - assets/images/lawyer1.png
    - assets/images/lawyer2.png
+   - assets/images/lawyer3.png
+   - assets/images/lawyer4.png
+   - assets/images/lawyer5.png
    - assets/images/ellipse1.png
    - assets/images/ellipse2.png
    - lib/images/apple.png

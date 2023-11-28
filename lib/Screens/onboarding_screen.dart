@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:project/Screens/login_page.dart';
+import 'package:project/Screens/onboarding_screen2.dart';
 
 class MyOnboardingApp extends StatelessWidget {
   @override
@@ -13,18 +13,18 @@ class MyOnboardingApp extends StatelessWidget {
 class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
+    double fontSize1 = screenWidth > 600 ? 28.0 : 18.0;
+    double fontSize2 = screenWidth > 600 ? 32.0 : 16.0;
+    double imageWidth = screenWidth * 1;
+    double imageHeight = screenHeight * 0.5;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFD1C5C5),
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          double screenWidth = constraints.maxWidth;
-          double screenHeight = constraints.maxHeight;
-
-          double fontSize1 = screenWidth > 600 ? 28.0 : 18.0;
-          double fontSize2 = screenWidth > 600 ? 32.0 : 19.0;
-          double imageWidth = screenWidth * 1; // Adjust the width
-          double imageHeight = screenHeight * 0.5; // Adjust the height
-
           return Stack(
             children: [
               Positioned(
@@ -37,7 +37,7 @@ class OnboardingScreen extends StatelessWidget {
                 ),
               ),
               Positioned(
-                left: screenWidth * -0.07, // Adjust this value to move the ellipse2
+                left: screenWidth * -0.07,
                 top: screenHeight * 0.03,
                 child: Image.asset(
                   'assets/images/ellipse2.png',
@@ -92,7 +92,7 @@ class OnboardingScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => LoginPage(),
+                          builder: (context) => OnboardingScreen2(),
                         ),
                       );
                     },
@@ -111,7 +111,7 @@ class OnboardingScreen extends StatelessWidget {
                       height: screenHeight * 0.1,
                       child: Center(
                         child: Text(
-                          'Get Started',
+                          'Next',
                           style: TextStyle(
                             fontSize: 24,
                             fontFamily: 'Poppins',

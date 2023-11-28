@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
-import 'package:project/Screens/square_tile.dart';
+import 'package:project/Screens/forgot_pass.dart';
 
 class LoginPage extends StatefulWidget {
-  LoginPage({super.key});
+  LoginPage({Key? key}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -15,7 +15,13 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   bool rememberMe = false;
 
-  void signUserIn() {}
+  void signUserIn() {
+    // Implement the logic for signing in the user
+  }
+
+  void navigateToSignupPage() {
+    Navigator.pushReplacementNamed(context, '/signup');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD1C5C5),
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
       body: SafeArea(
         child: Stack(
           children: [
@@ -50,19 +56,31 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: screenHeight * 0.2),
-                    MyTextField(
-                      controller: usernameController,
-                      hintText: 'Username',
-                      obscureText: false,
-                      borderRadius: 30.0, // Adjust the border radius
+                    Padding(
+                      padding: EdgeInsets.only(bottom: screenHeight * 0),
+                      child: Image.asset(
+                        'assets/images/lawyer2.png',
+                        width: screenWidth * 0.6,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 30.0),
+                      child: MyTextField(
+                        controller: usernameController,
+                        hintText: 'Username',
+                        obscureText: false,
+                        borderRadius: 30.0,
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.015),
-                    MyTextField(
-                      controller: passwordController,
-                      hintText: 'Password',
-                      obscureText: true,
-                      borderRadius: 30.0, // Adjust the border radius
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 30.0),
+                      child: MyTextField(
+                        controller: passwordController,
+                        hintText: 'Password',
+                        obscureText: true,
+                        borderRadius: 30.0,
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.015),
                     Padding(
@@ -110,11 +128,14 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ],
                           ),
-                          Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontFamily: 'Poppins',
+                          GestureDetector(
+                            onTap: navigateToSignupPage,
+                            child: Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
                           ),
                         ],
@@ -154,48 +175,45 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.03),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ClipOval(
-                          child: Material(
-                            color: Color.fromARGB(255, 255, 255, 255), // Set the desired background color
-                            child: InkWell(
-                              onTap: () {
-                                // Handle Google button tap
-                              },
-                              child: SizedBox(
-                                width: 55, // Adjust the width
-                                height: 55, // Adjust the height
-                                child: Center(
-                                  child: Image.asset('lib/images/google.png'),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30.0),
+                            color: Color(0xFF75A1A7),
+                          ),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.asset(
+                                  'lib/images/google.png',
+                                  width: 28,
+                                  height: 28,
                                 ),
                               ),
-                            ),
+                              VerticalDivider(
+                                color: Colors.grey[400],
+                                thickness: 1.0,
+                                width: 1.0,
+                              ),
+                              Text(
+                                'Continue with Google',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(width: screenWidth * 0.05),
-                        ClipOval(
-                          child: Material(
-                            color: Color.fromARGB(255, 255, 255, 255), // Set the desired background color
-                            child: InkWell(
-                              onTap: () {
-                                // Handle Apple button tap
-                              },
-                              child: SizedBox(
-                                width: 55, // Adjust the width
-                                height: 55, // Adjust the height
-                                child: Center(
-                                  child: Image.asset('lib/images/apple.png'),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.04),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -210,9 +228,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/signup');
-                          },
+                          onTap: navigateToSignupPage,
                           child: Text(
                             ' Register now',
                             style: TextStyle(
