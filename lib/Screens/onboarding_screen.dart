@@ -22,7 +22,7 @@ class OnboardingScreen extends StatelessWidget {
     double imageHeight = screenHeight * 0.5;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Color(0xff9f98c9),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Stack(
@@ -104,6 +104,9 @@ class OnboardingScreen extends StatelessWidget {
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30.0),
                         ),
+                      ),
+                      foregroundColor: MaterialStateProperty.all<Color>(
+                        Colors.white,
                       ),
                     ),
                     child: Container(

@@ -5,6 +5,7 @@ class MyTextField extends StatelessWidget {
   final String hintText;
   final bool obscureText;
   final double borderRadius; // Add this line for border radius
+  final TextInputType keyboardType; // Add this line for keyboardType
 
   MyTextField({
     Key? key,
@@ -12,18 +13,20 @@ class MyTextField extends StatelessWidget {
     required this.hintText,
     required this.obscureText,
     this.borderRadius = 12.0, // Set a default value or adjust as needed
+    this.keyboardType = TextInputType.text, // Set a default value or adjust as needed
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0), // Adjust the horizontal padding
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
-        style: TextStyle(fontSize: 14.0), // Adjust the font size
+        keyboardType: keyboardType,
+        style: TextStyle(fontSize: 14.0),
         decoration: InputDecoration(
-          contentPadding: EdgeInsets.symmetric(vertical: 18.0 , horizontal: 10), // Adjust the vertical padding
+          contentPadding: EdgeInsets.symmetric(vertical: 18.0, horizontal: 10),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(borderRadius),
             borderSide: BorderSide(color: Colors.white),

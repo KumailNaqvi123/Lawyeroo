@@ -23,13 +23,17 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.pushReplacementNamed(context, '/signup');
   }
 
+  void navigateToForgotPasswordPage()
+  {
+    Navigator.pushReplacementNamed(context, '/forgotPassword');
+  }
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Color(0Xff9f98c9),
       body: SafeArea(
         child: Stack(
           children: [
@@ -129,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           GestureDetector(
-                            onTap: navigateToSignupPage,
+                            onTap: navigateToForgotPasswordPage,
                             child: Text(
                               'Forgot Password?',
                               style: TextStyle(
@@ -203,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                               Text(
                                 'Continue with Google',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: Colors.white,
                                   fontFamily: 'Poppins',
                                 ),
                               ),
@@ -232,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             ' Register now',
                             style: TextStyle(
-                              color: const Color(0xFF75A1A7),
+                              color: Color.fromARGB(255, 108, 9, 173),
                               fontWeight: FontWeight.w300,
                               fontFamily: 'Poppins',
                             ),

@@ -8,7 +8,7 @@ class ForgotPasswordPage extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Color(0xFF9F98C9), // Change background color
       body: SafeArea(
         child: Stack(
           children: [
@@ -44,6 +44,7 @@ class ForgotPasswordPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 24,
                             fontFamily: 'Poppins',
+                            color: Colors.white, // Set text color
                           ),
                         ),
                       ),
@@ -109,6 +110,7 @@ class ForgotPasswordPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: screenWidth > 600 ? 18.0 : 16.0,
                               fontFamily: 'Poppins',
+                              color: Colors.white, // Set text color
                             ),
                           ),
                         ),
