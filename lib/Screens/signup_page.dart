@@ -1,13 +1,20 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
 
 class SignupPage extends StatefulWidget {
-  SignupPage({super.key});
+  SignupPage({Key? key}) : super(key: key);
 
   @override
   _SignupPageState createState() => _SignupPageState();
 }
+
+
+
 
 class _SignupPageState extends State<SignupPage> {
   final AddressController = TextEditingController();
@@ -17,10 +24,46 @@ class _SignupPageState extends State<SignupPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  void signUpUser() {
-    // Implement sign-up logic here
+  File? _image; // Store the selected image
+
+  void signUpUser() async {
+  var uri = Uri.parse('http://10.0.2.2:3000/api/clients/register-client'); // Use your computer's IP address if on a real device
+  var request = http.MultipartRequest('POST', uri);
+
+  // Add all the text fields as parts of the request
+  request.fields['first_name'] = firstnameController.text.trim();
+  request.fields['last_name'] = lastnameController.text.trim();
+  request.fields['email'] = emailController.text.trim();
+  request.fields['ph_number'] = "234242345"; // Ideally, you should have a controller for this
+  request.fields['address'] = AddressController.text.trim();
+  request.fields['password'] = passwordController.text.trim();
+  request.fields['verified'] = "False";  // Since this is a boolean, make sure your backend can parse the string correctly
+  request.fields['preferences'] = jsonEncode(["Criminal Law", "Tax Law"]);  // Directly encoding the preferences
+
+  // Handling the file upload for the profile picture
+  if (_image != null) {
+    request.files.add(await http.MultipartFile.fromPath(
+      'profile_picture',
+      _image!.path,
+    ));
   }
 
+  // Send the request
+  try {
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      print('Registration successful');
+      // Navigate or perform other actions upon success
+    } else {
+      print('Failed to register. Status code: ${response.statusCode}');
+      print('Reason: ${response.body}');
+    }
+  } catch (e) {
+    print('Error occurred: $e');
+  }
+}
   void navigateToLoginPage() {
     Navigator.pushReplacementNamed(context, '/login');
   }
@@ -45,15 +88,6 @@ class _SignupPageState extends State<SignupPage> {
                   height: screenWidth * 0.30,
                 ),
               ),
-              Positioned(
-                left: screenWidth * -0.07,
-                top: screenHeight * 0.02,
-                child: Image.asset(
-                  'assets/images/ellipse2.png',
-                  width: screenWidth * 0.3,
-                  height: screenWidth * 0.3,
-                ),
-              ),
               Container(
                 child: Column(
                   children: [
@@ -70,6 +104,29 @@ class _SignupPageState extends State<SignupPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontFamily: 'Poppins',
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        _selectImage();
+                      },
+                      child: Container(
+                        width: screenWidth * 0.3,
+                        height: screenWidth * 0.3,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        child: _image == null
+                            ? Icon(
+                                Icons.add_a_photo,
+                                size: 50,
+                                color: Colors.grey[400],
+                              )
+                            : Image.file(
+                                _image!,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.025),
@@ -203,5 +260,19 @@ class _SignupPageState extends State<SignupPage> {
         ),
       ),
     );
+  }
+
+  // Function to select image from gallery
+  void _selectImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      } else {
+        print('No image selected.');
+      }
+    });
   }
 }

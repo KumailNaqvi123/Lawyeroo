@@ -1,7 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:project/Screens/LawyerVerificationPage.dart';
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
-import 'package:project/Screens/IawyerInfopage.dart'; 
+import 'package:http/http.dart' as http;  // Correct import for http package
+import 'package:http_parser/http_parser.dart';
+
+
 class LawyerSignupPage extends StatefulWidget {
   LawyerSignupPage({Key? key}) : super(key: key);
 
@@ -9,32 +17,145 @@ class LawyerSignupPage extends StatefulWidget {
   _LawyerSignupPageState createState() => _LawyerSignupPageState();
 }
 
-
-
-
 class _LawyerSignupPageState extends State<LawyerSignupPage> {
   final AddressController = TextEditingController();
   final firstnameController = TextEditingController();
   final lastnameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final phoneController = TextEditingController();
+  final feesController = TextEditingController();
+  final experienceController = TextEditingController();
+  final universityController = TextEditingController();
 
-  void signUpLawyer() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UserInfoPage(
-          firstName: firstnameController.text,
-          lastName: lastnameController.text,
-          address: AddressController.text,
-          email: emailController.text,
-          password: passwordController.text,
-        ),
-      ),
+  List<String> specializations = [
+    'Criminal Law',
+    'Family Law',
+    'Corporate Law',
+    'Intellectual Property Law',
+    // Add more specializations as needed
+  ];
+  List<String> selectedSpecializations = []; // Store selected specializations
+
+  File? _image; // Store the selected image
+
+
+ bool validateInputs() {
+  if (firstnameController.text.isEmpty ||
+      lastnameController.text.isEmpty ||
+      !emailController.text.contains('@') ||
+      passwordController.text.length < 6 ||
+      phoneController.text.isEmpty ||
+      AddressController.text.isEmpty ||
+      feesController.text.isEmpty ||
+      experienceController.text.isEmpty ||
+      universityController.text.isEmpty ||
+      selectedSpecializations.isEmpty) {
+    print('Validation failed');
+    return false;
+  }
+  return true;
+}
+  
+  bool isValidEmail(String email) {
+  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  return regex.hasMatch(email);
+}
+
+void signUpLawyer() async {
+ if (!validateInputs()) {
+    // Show an error message or alert dialog here
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text('Please fill all the fields correctly.'),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();  // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
     );
+    return;  // Stop the function if validation fails
   }
 
+  var uri = Uri.parse('http://192.168.10.2:3000/api/lawyers/register-lawyer');
+  var request = http.MultipartRequest('POST', uri);
+
+  // Adding fields to the request
+  Map<String, String> fields = {
+    'first_name': firstnameController.text,
+    'last_name': lastnameController.text,
+    'email': emailController.text,
+    'password': passwordController.text,
+    'ph_number': phoneController.text,
+    'address': AddressController.text,
+    'fees': feesController.text,
+    'years_of_experience': experienceController.text,
+    'universities': universityController.text,
+    'rating': "3.4",  // Assuming a static rating
+    'verified': "false",
+    'account_type': "Lawyer",
+    'preferences': jsonEncode(selectedSpecializations)
+  };
+
+  request.fields.addAll(fields);
+
+  // Handling the file upload for the profile picture
+
+  if (_image == null) {
+  print('No image selected.');
+  // Show an error or return
+  return;
+    }
+  else 
+ if (_image != null) {
+    request.files.add(await http.MultipartFile.fromPath(
+        'profile_picture',
+        _image!.path,
+        contentType: MediaType('image', 'jpeg')  // Ensure this matches the image type
+    ));
+    print('Uploading image: ${_image!.path}');
+} else {
+    print('No image selected.');
+}
+
+  // Send the request
+  try {
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      print('Registration successful');
+      // Process the response to extract tempKey
+      var responseBody = await http.Response.fromStream(response);
+      var data = jsonDecode(responseBody.body);
+      var tempKey = data['tempKey'];  // Extract tempKey from response
+      print('Temporary Key: $tempKey');  // Print the tempKey
+      print('Response Body: ${responseBody.body}');
+      
+       // Print the image file path before navigation
+  if (_image != null) {
+    print('Image to be passed: ${_image!.path}');
+  } else {
+    print('No image has been selected.');
+  }
+
+     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OTPVerificationPage(tempKey: tempKey, profileImage: _image,)));  // Navigate on success
+    } else {
+      print('Failed to register lawyer. Status code: ${response.statusCode}');
+      var responseBody = await http.Response.fromStream(response);
+      print('Failed reason: ${responseBody.body}');
+    }
+  } catch (e) {
+    print('Error occurred: $e');
+  }
+}
   void navigateToLoginPage() {
     Navigator.pushReplacementNamed(context, '/lawyerlogin');
   }
@@ -87,6 +208,30 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.025),
+                    GestureDetector(
+                      onTap: () {
+                        _selectImage();
+                      },
+                      child: Container(
+                        width: screenWidth * 0.4,
+                        height: screenWidth * 0.4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        child: _image == null
+                            ? Icon(
+                                Icons.add_a_photo,
+                                size: 50,
+                                color: Colors.grey[400],
+                              )
+                            : Image.file(
+                                _image!,
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.025),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
                       child: Column(
@@ -116,6 +261,14 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
                           ),
                           SizedBox(height: screenHeight * 0.010),
                           MyTextField(
+                            controller: phoneController,
+                            hintText: 'Phone Number',
+                            obscureText: false,
+                            borderRadius: 30.0,
+                            keyboardType: TextInputType.phone,
+                          ),
+                          SizedBox(height: screenHeight * 0.010),
+                          MyTextField(
                             controller: emailController,
                             hintText: 'E-mail',
                             obscureText: false,
@@ -129,67 +282,57 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
                             obscureText: true,
                             borderRadius: 30.0,
                           ),
+                          SizedBox(height: screenHeight * 0.010),
+                          MyTextField(
+                            controller: feesController,
+                            hintText: 'Fees',
+                            obscureText: false,
+                            borderRadius: 30.0,
+                            keyboardType: TextInputType.number,
+                          ),
+                          SizedBox(height: screenHeight * 0.010),
+                          MyTextField(
+                            controller: experienceController,
+                            hintText: 'Years of Experience',
+                            obscureText: false,
+                            borderRadius: 30.0,
+                            keyboardType: TextInputType.number,
+                          ),
+                          SizedBox(height: screenHeight * 0.010),
+                          MyTextField(
+                            controller: universityController,
+                            hintText: 'University',
+                            obscureText: false,
+                            borderRadius: 30.0,
+                            keyboardType: TextInputType.text,
+                          ),
+                          SizedBox(height: screenHeight * 0.010),
+                          Wrap(
+                            children: specializations.map((String value) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ChoiceChip(
+                                  label: Text(value),
+                                  selected: selectedSpecializations.contains(value),
+                                  onSelected: (bool selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        selectedSpecializations.add(value);
+                                      } else {
+                                        selectedSpecializations.remove(value);
+                                      }
+                                    });
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
                           SizedBox(height: screenHeight * 0.020),
                         ],
                       ),
                     ),
                     MyButton2(
                       onTap: signUpLawyer,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: 'Poppins',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 9.5,
-                              horizontal: 16.0,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30.0),
-                              color: Color(0xFF75A1A7),
-                            ),
-                            child: Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Image.asset(
-                                    'lib/images/google.png',
-                                    width: 28,
-                                    height: 28,
-                                  ),
-                                ),
-                                VerticalDivider(
-                                  color: Colors.grey[400],
-                                  thickness: 1.0,
-                                  width: 1.0,
-                                ),
-                                Text(
-                                  'Continue with Google',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     Row(
@@ -203,6 +346,7 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
                         ),
                         GestureDetector(
                           onTap: navigateToLoginPage,
+                          
                           child: Text(
                             'Login',
                             style: TextStyle(
@@ -222,4 +366,19 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
       ),
     );
   }
+
+  // Function to select image from gallery
+ void _selectImage() async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+  setState(() {
+    if (pickedFile != null) {
+      _image = File(pickedFile.path);
+      print('Image Path: ${_image!.path}');  // Log the image path
+    } else {
+      print('No image selected.');
+    }
+  });
+}
 }

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:project/Screens/CreatePost.dart';
-import 'package:project/Screens/News.dart';
-import 'package:project/Screens/contact_screen.dart';
-import 'package:project/Screens/home_screen.dart';
-import 'package:project/Screens/Settings.dart';
 import 'post_details.dart';
 
 class QnABoard extends StatefulWidget {
@@ -14,6 +10,10 @@ class QnABoard extends StatefulWidget {
 
 class _QnABoardState extends State<QnABoard> {
   List<Post> posts = [];
+
+  // Define user's name and profile picture
+  String userName = "Your Name";
+  String userProfilePicture = "assets/images/profile_picture.png"; // Replace with actual path
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class _QnABoardState extends State<QnABoard> {
           ),
         ],
       ),
-      backgroundColor: Color(0xffefeae2),
+      backgroundColor: Color(0xFFB884D1), // Set background color here
       body: ListView.builder(
         itemCount: posts.length,
         itemBuilder: (context, index) {
@@ -53,11 +53,6 @@ class _QnABoardState extends State<QnABoard> {
           );
         },
       ),
-
-
-      //bottomNavigationBar: _buildNavBar(context),
-
-
     );
   }
 
@@ -68,68 +63,11 @@ class _QnABoardState extends State<QnABoard> {
         content: content,
         comments: [],
         creationTime: DateTime.now(),
+        userName: userName, // Include user's name when creating the post
+        userProfilePicture: userProfilePicture, // Include user's profile picture when creating the post
       ));
     });
   }
-
-  // Widget _buildNavBar(BuildContext context) {
-  //   return Container(
-  //     color: Color(0xFFDCBAFF),
-  //     child: Row(
-  //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //       children: [
-  //         IconButton(
-  //           icon: Icon(Icons.home),
-  //           onPressed: () {
-  //             Navigator.pushAndRemoveUntil(
-  //               context,
-  //               MaterialPageRoute(builder: (context) => HomeScreen()),
-  //               (route) => false,
-  //             );
-  //           },
-  //         ),
-  //         IconButton(
-  //           icon: Icon(Icons.chat),
-  //           onPressed: () {
-  //             Navigator.push(
-  //               context,
-  //               MaterialPageRoute(
-  //                 builder: (context) => ContactsScreen(context: context),
-  //               ),
-  //             );
-  //           },
-  //         ),
-  //         IconButton(
-  //           icon: Icon(Icons.article),
-  //           onPressed: () {
-  //             Navigator.push(
-  //               context,
-  //               MaterialPageRoute(builder: (context) => NewsPage()),
-  //             );
-  //           },
-  //         ),
-  //         IconButton(
-  //           icon: Icon(Icons.question_answer, color: Color(0xFF912bFF)),
-  //           onPressed: () {
-  //             Navigator.push(
-  //               context,
-  //               MaterialPageRoute(builder: (context) => QnABoard()),
-  //             );
-  //           },
-  //         ),
-  //         IconButton(
-  //           icon: Icon(Icons.person),
-  //           onPressed: () {
-  //             Navigator.push(
-  //               context,
-  //               MaterialPageRoute(builder: (context) => SettingsPage()),
-  //             );
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }
 
 class PostTile extends StatelessWidget {
@@ -146,48 +84,28 @@ class PostTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Post Title and Content
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Post Title
+            Text(
+              post.title,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8), // Added spacing
+            // Post Content
+            Text(
+              post.content,
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 12), // Added spacing
+            // Post metadata
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  post.title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  _getTimeElapsed(post.creationTime),
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-                SizedBox(height: 5),
-                Text(
-                  post.content,
-                  style: TextStyle(fontSize: 14),
-                ),
+                // Add additional metadata if needed
               ],
-            ),
-            // Upvote and Downvote Buttons
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.start,
-            //   children: [
-            //     // Upvote Button
-            //     TextButton(
-            //       onPressed: () {
-            //         // Implement upvote logic here
-            //       },
-            //       child: Icon(Icons.arrow_upward),
-            //     ),
-            //     // Downvote Button
-            //     TextButton(
-            //       onPressed: () {
-            //         // Implement downvote logic here
-            //       },
-            //       child: Icon(Icons.arrow_downward),
-            //     ),
-            //   ],
-            // ),
-            // Date and Time (Top right)
-            Align(
-              alignment: Alignment.topRight,
-              child: Text(
-                _getTimeElapsed(post.creationTime),
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
             ),
           ],
         ),
@@ -212,12 +130,16 @@ class Post {
   final String content;
   final List<Comment> comments;
   final DateTime creationTime;
+  final String userName; // User's name
+  final String userProfilePicture; // User's profile picture
 
   Post({
     required this.title,
     required this.content,
     required this.comments,
     required this.creationTime,
+    required this.userName,
+    required this.userProfilePicture,
   });
 }
 

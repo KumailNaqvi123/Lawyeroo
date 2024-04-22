@@ -46,71 +46,70 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
     return Scaffold(
       body: Column(
         children: [
-          Expanded(
-            child: Container(
-              color: Color(0xFFdcbaff),
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 50.0,
-                      backgroundImage: AssetImage('assets/images/passport.png'),
+          Container(
+            color: Color(0xFFdcbaff),
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                SizedBox(height: 16.0), // Added padding above the profile picture
+                Center(
+                  child: CircleAvatar(
+                    radius: 50.0,
+                    backgroundImage: AssetImage('assets/images/passport.png'),
+                  ),
+                ),
+                SizedBox(height: 16.0),
+                Text(
+                  '${widget.lawyerData['name']}',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+                SizedBox(height: 8.0),
+                Text(
+                  '${widget.lawyerData['specification']}',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+                SizedBox(height: 8.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          Icons.star,
+                          color: index < widget.lawyerData['rating']
+                              ? Colors.yellow
+                              : Colors.grey,
+                        );
+                      }),
                     ),
-                  ),
-                  SizedBox(height: 16.0),
-                  Text(
-                    '${widget.lawyerData['name']}',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(
-                    '${widget.lawyerData['specification']}',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                  SizedBox(height: 8.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            Icons.star,
-                            color: index < widget.lawyerData['rating']
-                                ? Colors.yellow
-                                : Colors.grey,
-                          );
-                        }),
+                  ],
+                ),
+                SizedBox(height: 16.0),
+                // "View Details" button
+                TextButton(
+                  onPressed: () {
+                    // Navigate to LawyerProfilePage when "View Details" is pressed
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LawyerProfilePageBrowse(),
                       ),
-                    ],
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
                   ),
-                  SizedBox(height: 16.0),
-                  // "View Details" button
-                  TextButton(
-                    onPressed: () {
-                      // Navigate to LawyerProfilePage when "View Details" is pressed
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LawyerProfilePageBrowse(),
-                        ),
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                    ),
-                    child: Text(
-                      'View Details',
-                      style: TextStyle(
-                        color: Color(0xFFb884d1),
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  child: Text(
+                    'View Details',
+                    style: TextStyle(
+                      color: Color(0xFFb884d1),
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           Expanded(

@@ -8,17 +8,19 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  // Dummy lawyer profiles
+  final List<String> lawyerTypes = ['All', 'Criminal Defense', 'Family Law'];
+  String selectedLawyerType = 'All';
+
   final List<dynamic> lawyerProfiles = [
     {
       'name': 'Lawyer 1',
       'specification': 'Criminal Defense',
       'rating': Random().nextDouble() * 5,
-      'image': 'assets/images/passport1.png', // Add the path to your images
+      'image': 'assets/images/passport1.png',
     },
     {
       'name': 'Lawyer 2',
-      'specification': 'Family Law',
+      'specification': 'Criminal Defense',
       'rating': Random().nextDouble() * 5,
       'image': 'assets/images/passport2.png',
     },
@@ -26,11 +28,11 @@ class _SearchPageState extends State<SearchPage> {
       'name': 'Lawyer 3',
       'specification': 'Criminal Defense',
       'rating': Random().nextDouble() * 5,
-      'image': 'assets/images/passport3.png', // Add the path to your images
+      'image': 'assets/images/passport3.png',
     },
     {
       'name': 'Lawyer 4',
-      'specification': 'Family Law',
+      'specification': 'Criminal Defense',
       'rating': Random().nextDouble() * 5,
       'image': 'assets/images/passport4.png',
     },
@@ -38,7 +40,7 @@ class _SearchPageState extends State<SearchPage> {
       'name': 'Lawyer 5',
       'specification': 'Criminal Defense',
       'rating': Random().nextDouble() * 5,
-      'image': 'assets/images/passport5.png', // Add the path to your images
+      'image': 'assets/images/passport5.png',
     },
     {
       'name': 'Lawyer 6',
@@ -48,9 +50,9 @@ class _SearchPageState extends State<SearchPage> {
     },
     {
       'name': 'Lawyer 7',
-      'specification': 'Criminal Defense',
+      'specification': 'Family Law',
       'rating': Random().nextDouble() * 5,
-      'image': 'assets/images/passport7.png', // Add the path to your images
+      'image': 'assets/images/passport7.png',
     },
     {
       'name': 'Lawyer 8',
@@ -58,10 +60,21 @@ class _SearchPageState extends State<SearchPage> {
       'rating': Random().nextDouble() * 5,
       'image': 'assets/images/passport8.png',
     },
+    {
+      'name': 'Lawyer 9',
+      'specification': 'Family Law',
+      'rating': Random().nextDouble() * 5,
+      'image': 'assets/images/passport9.png',
+    },
+    {
+      'name': 'Lawyer 10',
+      'specification': 'Family Law',
+      'rating': Random().nextDouble() * 5,
+      'image': 'assets/images/passport10.png',
+    },
   ];
 
-  List<bool> isFavorite = List.generate(8, (index) => false); // Initialize all hearts as not tapped
-
+  List<bool> isFavorite = List.generate(10, (index) => false);
   List<dynamic> filteredProfiles = [];
 
   @override
@@ -79,7 +92,24 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
-  
+  void filterByLawyerType(List<bool> typeSelection) {
+    List<String> selectedTypes = [];
+    for (int i = 0; i < typeSelection.length; i++) {
+      if (typeSelection[i]) {
+        selectedTypes.add(lawyerTypes[i]);
+      }
+    }
+
+    setState(() {
+      if (selectedTypes.isEmpty || selectedTypes.contains('All')) {
+        filteredProfiles = List.from(lawyerProfiles);
+      } else {
+        filteredProfiles = lawyerProfiles
+            .where((profile) => selectedTypes.contains(profile['specification']))
+            .toList();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +117,50 @@ class _SearchPageState extends State<SearchPage> {
       appBar: AppBar(
         backgroundColor: Color(0xFFdcbaff),
         title: Text('Search'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.filter_list),
+            onPressed: () {
+              List<bool> typeSelection = List<bool>.filled(lawyerTypes.length, false);
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return AlertDialog(
+                        title: Text('Filter by Type'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(
+                            lawyerTypes.length,
+                            (index) => CheckboxListTile(
+                              title: Text(lawyerTypes[index]),
+                              value: typeSelection[index],
+                              onChanged: (value) {
+                                setState(() {
+                                  typeSelection[index] = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        actions: [
+                          ElevatedButton(
+                            onPressed: () {
+                              filterByLawyerType(typeSelection);
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -110,13 +184,20 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      onChanged: filterProfiles,
-                      decoration: InputDecoration(
-                        hintText: 'Search...',
-                        border: InputBorder.none,
-                        icon: Icon(Icons.search),
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            onChanged: filterProfiles,
+                            decoration: InputDecoration(
+                              hintText: 'Search...',
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -146,7 +227,7 @@ class _SearchPageState extends State<SearchPage> {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white, // Set button background color
+                                backgroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -157,7 +238,6 @@ class _SearchPageState extends State<SearchPage> {
                                 children: [
                                   Row(
                                     children: [
-                                      // Heart icon added here
                                       GestureDetector(
                                         onTap: () {
                                           setState(() {

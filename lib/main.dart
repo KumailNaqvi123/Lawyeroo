@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project/Screens/Option_screen.dart';
 import 'package:project/Screens/forgot_pass.dart';
+import 'package:project/Screens/lawyerhomepage.dart'; // Import the LawyerHomepage
 import 'package:project/Screens/lawyersignup.dart';
 import 'package:project/Screens/onboarding_screen2.dart';
 import 'package:project/Screens/onboarding_screen3.dart';
@@ -9,7 +10,6 @@ import 'package:project/Screens/onboarding_screen.dart'; // Import the Onboardin
 import 'package:project/Screens/login_page.dart'; // Import the LoginPage
 import 'package:project/Screens/signup_page.dart';
 import 'package:project/lawyerlogin.dart'; // Import the SignupPage
-
 
 void main() {
   runApp(const MyApp());
@@ -31,9 +31,10 @@ class MyApp extends StatelessWidget {
         '/onboarding': (context) => OnboardingScreen(),
         '/onboarding2': (context) => OnboardingScreen2(),
         '/onboarding3': (context) => OnboardingScreen3(),
-        '/options':(context) => Options(),
-        '/lawyerlogin' : (context) => LawyerLoginPage(),
-        '/lawyersignup' : (context) => LawyerSignupPage(),
+        '/options': (context) => Options(),
+        '/lawyerhomepage': (context) => LawyerHomepage(), // Add LawyerHomepage route
+        '/lawyerlogin': (context) => LawyerLoginPage(),
+        '/lawyersignup': (context) => LawyerSignupPage(),
         '/login': (context) => LoginPage(),
         '/signup': (context) => SignupPage(),
         '/forgotPassword': (context) => ForgotPasswordPage(),
@@ -41,4 +42,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

@@ -1,36 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:project/Screens/ArticleDetailsPage.dart';
+import 'package:project/Screens/lawyerhomepage.dart'; // Import the LawyerHomepage
 
 class LawyerBlogsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Legal Blogs & Articles'),
-        backgroundColor: Color(0xFFDCBAFF),
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(16.0),
-        children: [
-          _buildArticleCard(
-            context: context,
-            title: 'Understanding Intellectual Property Rights',
-            author: 'John Doe',
-            date: 'January 15, 2024',
-            image: 'assets/images/house.jpg',
-            content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ...',
-          ),
-          SizedBox(height: 16),
-          _buildArticleCard(
-            context: context,
-            title: 'Key Elements of a Contract',
-            author: 'Jane Smith',
-            date: 'February 5, 2024',
-            image: 'assets/images/contract.jpg',
-            content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ...',
-          ),
-          // Add more articles as needed
-        ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Navigate to LawyerHomepage when back button is pressed
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LawyerHomepage()),
+          (route) => false,
+        );
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Legal Blogs & Articles'),
+          backgroundColor: Color(0xFFDCBAFF),
+        ),
+        backgroundColor: Color(0xFFB884D1),
+        body: ListView(
+          padding: EdgeInsets.all(16.0),
+          children: [
+            _buildArticleCard(
+              context: context,
+              title: 'Understanding Intellectual Property Rights',
+              author: 'John Doe',
+              date: 'January 15, 2024',
+              image: 'assets/images/house.jpg',
+              content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ...',
+            ),
+            SizedBox(height: 16),
+            _buildArticleCard(
+              context: context,
+              title: 'Key Elements of a Contract',
+              author: 'Jane Smith',
+              date: 'February 5, 2024',
+              image: 'assets/images/contract.jpg',
+              content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ...',
+            ),
+          ],
+        ),
       ),
     );
   }

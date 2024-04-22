@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:project/Screens/news_details_page.dart';
 
-class NewsPage extends StatelessWidget {
+class NewsPage extends StatefulWidget {
+  @override
+  _NewsPageState createState() => _NewsPageState();
+}
+
+class _NewsPageState extends State<NewsPage> {
+  List<String> newsTypes = ['All', 'Tech', 'Space', 'Breaking'];
+
+  String selectedFilter = 'All'; // Initially set to show all news
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -9,13 +18,35 @@ class NewsPage extends StatelessWidget {
         title: Text('NEWS'),
         centerTitle: true,
         backgroundColor: Color(0xFFDCBAFF),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.filter_list),
+            itemBuilder: (BuildContext context) {
+              return newsTypes.map((String type) {
+                return PopupMenuItem<String>(
+                  value: type,
+                  child: Text(type),
+                );
+              }).toList();
+            },
+            onSelected: (String value) {
+              setState(() {
+                selectedFilter = value;
+              });
+            },
+          ),
+        ],
       ),
-      body: NewsList(),
+      body: NewsList(selectedFilter: selectedFilter),
     );
   }
 }
 
 class NewsList extends StatelessWidget {
+  final String selectedFilter;
+
+  NewsList({required this.selectedFilter});
+
   @override
   Widget build(BuildContext context) {
     List<NewsItem> news = [
@@ -23,24 +54,32 @@ class NewsList extends StatelessWidget {
         title: 'Breaking News: Flutter 3.0 Released!',
         imageAsset: 'assets/images/News_Thumbnail.png',
         fullArticleUrl: 'https://example.com/full_article1',
+        type: 'Breaking',
         body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       ),
       NewsItem(
         title: 'Tech Giants Announce Collaboration on AI Research',
         imageAsset: 'assets/images/News_Thumbnail.png',
         fullArticleUrl: 'https://example.com/full_article2',
+        type: 'Tech',
         body: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
       ),
       NewsItem(
         title: 'SpaceX Launches New Mission to Mars',
         imageAsset: 'assets/images/News_Thumbnail.png',
         fullArticleUrl: 'https://example.com/full_article3',
+        type: 'Space',
         body: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
       ),
     ];
 
+    // Apply filtering
+    List<NewsItem> filteredNews = selectedFilter == 'All'
+        ? news
+        : news.where((newsItem) => newsItem.type == selectedFilter).toList();
+
     return ListView.builder(
-      itemCount: news.length,
+      itemCount: filteredNews.length,
       itemBuilder: (context, index) {
         return Card(
           elevation: 4.0,
@@ -48,10 +87,10 @@ class NewsList extends StatelessWidget {
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: NewsCard(
-            title: news[index].title,
-            imageAsset: news[index].imageAsset,
-            fullArticleUrl: news[index].fullArticleUrl,
-            body: news[index].body,
+            title: filteredNews[index].title,
+            imageAsset: filteredNews[index].imageAsset,
+            fullArticleUrl: filteredNews[index].fullArticleUrl,
+            body: filteredNews[index].body,
           ),
         );
       },
@@ -63,12 +102,14 @@ class NewsItem {
   final String title;
   final String imageAsset;
   final String fullArticleUrl;
+  final String type; // Added type field for filtering
   final String body;
 
   NewsItem({
     required this.title,
     required this.imageAsset,
     required this.fullArticleUrl,
+    required this.type,
     required this.body,
   });
 }

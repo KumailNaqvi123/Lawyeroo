@@ -117,3 +117,30 @@ class MyButton3 extends StatelessWidget {
 
 
 
+class MyButton4 extends StatelessWidget {
+  final String text; // Define the text parameter
+  final VoidCallback onTap;
+
+  const MyButton4({
+    required this.text,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+        decoration: BoxDecoration(
+          color: Color(0xFF187d89), // Change color as needed
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+      ),
+    );
+  }
+}

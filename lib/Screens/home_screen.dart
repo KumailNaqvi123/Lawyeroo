@@ -36,10 +36,23 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Color(0xFFDCBAFF),
         automaticallyImplyLeading: false,
-        title: Image.asset(
-          'assets/images/L.png',
-          width: 150,
-          height: 150,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/L.png',
+              width: 30, // Adjust the size of the logo
+              height: 30, // Adjust the size of the logo
+            ),
+            SizedBox(width: 8), // Adjust the spacing between logo and title
+            Text(
+              'Home',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
