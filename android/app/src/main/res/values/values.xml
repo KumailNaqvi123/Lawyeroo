@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Firebase API Key -->
+    <string name="google_api_key">AIzaSyDi1AOwiJywH3BsIsPNELZlAy31aKrmrws</string>
+    
+    <!-- Firebase Database URL -->
+    <string name="firebase_database_url">https://lawyeroo-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+    
+    <!-- Firebase Project ID -->
+    <string name="firebase_project_id">lawyeroo</string>
+    
+    <!-- Firebase Storage Bucket -->
+    <string name="firebase_storage_bucket">lawyeroo.appspot.com</string>
+    
+    <!-- Firebase Application ID -->
+    <string name="firebase_app_id">1:1067587453247:android:60d79fed9b8694dff4d38a</string>
+</resources>

@@ -1,50 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import the services library
-import 'package:flutter/gestures.dart'; // Import the gestures library
+import 'dart:convert';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: LawyerProfilePageBrowse(),
-      theme: ThemeData(
-        fontFamily: 'Poppins', // Set the default font to Poppins
-      ),
-    );
-  }
-}
 
 class LawyerProfilePageBrowse extends StatelessWidget {
-  final String firstName = 'John';
-  final String lastName = 'Doe';
-  final String email = 'john.doe@example.com';
-  final String phoneNumber = '+1234567890';
-  final String address = '123 Main St, City';
-  final String specializations = 'Random Specializations';
-  final String experience = 'Random Experience';
-  final String universities = 'Random Universities';
+  final Map<String, dynamic> lawyerData;
+
+  LawyerProfilePageBrowse({required this.lawyerData});
 
   @override
   Widget build(BuildContext context) {
+    print("Current Page: Lawyer Profile (Browse Mode)");
+    print("Lawyer Data: $lawyerData"); // This will help verify what is received in the lawyerData
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile'),
-        backgroundColor: Color(0xFFddbafb), // Set app bar color
-        actions: [
-          IconButton(
-            icon: Icon(Icons.calendar_today), // Icon for booking appointment
-            onPressed: () {
-              // Add your logic here for booking an appointment
-              // For example: Navigator.push(context, MaterialPageRoute(builder: (context) => BookAppointmentScreen()));
-            },
-          ),
-        ],
+        backgroundColor: Color(0xFFddbafb),
       ),
-      backgroundColor: Color(0xFFb884d1), // Set background color
+      backgroundColor: Color(0xFFb884d1),
       body: SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.all(16.0),
@@ -52,21 +26,21 @@ class LawyerProfilePageBrowse extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Card(
-                color: Colors.white.withOpacity(0.8), // Set whitish translucent color
-                elevation: 0, // Remove elevation
+                color: Colors.white.withOpacity(0.8),
+                elevation: 0,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoField('First Name', firstName),
-                      _buildInfoField('Last Name', lastName),
-                      _buildInfoField('Email', email),
-                      _buildInfoField('Phone Number', phoneNumber, true), // Pass true to indicate phone number field
-                      _buildInfoField('Address', address),
-                      _buildInfoField('Specializations', specializations),
-                      _buildInfoField('Years of Experience', experience),
-                      _buildInfoField('Universities', universities),
+                      _buildInfoField('First Name', lawyerData['first_name']),
+                      _buildInfoField('Last Name', lawyerData['last_name']),
+                      _buildInfoField('Email', lawyerData['email']),
+                      _buildInfoField('Phone Number', lawyerData['ph_number']),
+                      _buildInfoField('Address', lawyerData['address']),
+                      _buildInfoField('Specializations', _formatSpecializations(lawyerData['specializations'])),
+                      _buildInfoField('Years of Experience', lawyerData['years_of_experience']),
+                      _buildInfoField('Universities', lawyerData['universities']),
                     ],
                   ),
                 ),
@@ -79,79 +53,49 @@ class LawyerProfilePageBrowse extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoField(String label, String value, [bool isPhoneNumber = false]) {
-    IconData iconData = Icons.error; // Default icon in case label doesn't match any case
+Widget _buildInfoField(String label, dynamic value) {
+  IconData iconData = Icons.error; // Default icon
+  switch (label) {
+    case 'First Name': iconData = Icons.person; break;
+    case 'Last Name': iconData = Icons.person; break;
+    case 'Email': iconData = Icons.email; break;
+    case 'Phone Number': iconData = Icons.phone; break;
+    case 'Address': iconData = Icons.location_on; break;
+    case 'Specializations': iconData = Icons.star; break;
+    case 'Years of Experience': iconData = Icons.work; break;
+    case 'Universities': iconData = Icons.school; break;
+    default: break;
+  }
 
-    switch (label) {
-      case 'First Name':
-        iconData = Icons.person;
-        break;
-      case 'Last Name':
-        iconData = Icons.person;
-        break;
-      case 'Email':
-        iconData = Icons.email;
-        break;
-      case 'Phone Number':
-        iconData = Icons.phone;
-        break;
-      case 'Address':
-        iconData = Icons.location_on;
-        break;
-      case 'Specializations':
-        iconData = Icons.star;
-        break;
-      case 'Years of Experience':
-        iconData = Icons.work;
-        break;
-      case 'Universities':
-        iconData = Icons.school;
-        break;
-      default:
-        break; // No need for action as it will use the default icon
-    }
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            iconData,
-            size: 30.0, // Set the size of the icon
-          ),
-          SizedBox(width: 8.0),
-          Column(
+  String displayValue = value.toString(); // Convert value to string
+  return Padding(
+    padding: EdgeInsets.only(bottom: 8.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(iconData, size: 30.0),
+        SizedBox(width: 8.0),
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Row(
-                children: [
-                  if (isPhoneNumber) // Only show the copy icon if it's the phone number field
-                    GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: value)); // Copy to clipboard
-                      },
-                      child: Icon(Icons.content_copy), // Clipboard icon
-                    ),
-                  SizedBox(width: 8.0),
-                  Text(
-                    value,
-                    style: TextStyle(fontSize: 16.0),
-                    textAlign: TextAlign.right,
-                  ),
-                ],
-              ),
+              Text(label, style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+              Text(displayValue, style: TextStyle(fontSize: 16.0)),
             ],
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
+}
+
+  String _formatSpecializations(dynamic specializations) {
+    if (specializations is List) {
+      return specializations.join(", ");
+    } else if (specializations is String) {
+      return specializations;
+    } else {
+      return 'Not Available';
+    }
   }
 }

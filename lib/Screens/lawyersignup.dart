@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:project/Screens/Global.dart';
 import 'package:project/Screens/LawyerVerificationPage.dart';
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
 import 'package:http/http.dart' as http;  // Correct import for http package
 import 'package:http_parser/http_parser.dart';
-
 
 class LawyerSignupPage extends StatefulWidget {
   LawyerSignupPage({Key? key}) : super(key: key);
@@ -18,51 +17,100 @@ class LawyerSignupPage extends StatefulWidget {
 }
 
 class _LawyerSignupPageState extends State<LawyerSignupPage> {
-  final AddressController = TextEditingController();
-  final firstnameController = TextEditingController();
-  final lastnameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final phoneController = TextEditingController();
-  final feesController = TextEditingController();
-  final experienceController = TextEditingController();
-  final universityController = TextEditingController();
+  int _currentPageIndex = 0;
+  final TextEditingController firstnameController = TextEditingController();
+  final TextEditingController lastnameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController feesController = TextEditingController();
+  final TextEditingController experienceController = TextEditingController();
+  final TextEditingController universityController = TextEditingController();
 
   List<String> specializations = [
-    'Criminal Law',
-    'Family Law',
-    'Corporate Law',
+    'Personal Injury Law',
+    'Estate Planning Law',
+    'Bankruptcy Law',
     'Intellectual Property Law',
-    // Add more specializations as needed
+    'Employment Law',
+    'Corporate Law',
+    'Immigration Law',
+    'Criminal Law',
   ];
-  List<String> selectedSpecializations = []; // Store selected specializations
+  List<String> selectedSpecializations = [];
 
-  File? _image; // Store the selected image
+  File? _image;
 
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
  bool validateInputs() {
-  if (firstnameController.text.isEmpty ||
-      lastnameController.text.isEmpty ||
-      !emailController.text.contains('@') ||
-      passwordController.text.length < 6 ||
-      phoneController.text.isEmpty ||
-      AddressController.text.isEmpty ||
-      feesController.text.isEmpty ||
-      experienceController.text.isEmpty ||
-      universityController.text.isEmpty ||
-      selectedSpecializations.isEmpty) {
-    print('Validation failed');
-    return false;
+    if (firstnameController.text.isEmpty ||
+        lastnameController.text.isEmpty ||
+        !emailController.text.contains('@') ||
+        passwordController.text.length < 6 ||
+        phoneController.text.isEmpty ||
+        addressController.text.isEmpty ||
+        feesController.text.isEmpty || // Ensure fees are not empty
+        experienceController.text.length < 2 || // Ensure experience is not empty
+        universityController.text.isEmpty) { // Ensure university is not empty
+      print('Validation failed');
+      return false;
+    }
+    return true;
   }
-  return true;
-}
-  
-  bool isValidEmail(String email) {
-  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-  return regex.hasMatch(email);
-}
 
-void signUpLawyer() async {
+
+  bool isValidEmail(String email) {
+    final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return regex.hasMatch(email);
+  }
+
+   bool isValidFees(String fees) {
+    final regex = RegExp(r'^\d{1,2}$'); // Regex for 1 or 2 digits
+    return regex.hasMatch(fees);
+  }
+
+  bool isValidExperience(String experience) {
+    final regex = RegExp(r'^\d+$'); // Regex for only digits
+    return regex.hasMatch(experience);
+  }
+
+  bool isValidUniversity(String university) {
+    final regex = RegExp(r'^[a-zA-Z\s]+$'); // Regex for only letters and spaces
+    return regex.hasMatch(university);
+  }
+
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+ void signUpLawyer() async {
  if (!validateInputs()) {
     // Show an error message or alert dialog here
     showDialog(
@@ -85,7 +133,7 @@ void signUpLawyer() async {
     return;  // Stop the function if validation fails
   }
 
-  var uri = Uri.parse('http://192.168.10.2:3000/api/lawyers/register-lawyer');
+  var uri = Uri.parse('${GlobalData().baseUrl}/api/lawyers/register-lawyer');
   var request = http.MultipartRequest('POST', uri);
 
   // Adding fields to the request
@@ -95,14 +143,14 @@ void signUpLawyer() async {
     'email': emailController.text,
     'password': passwordController.text,
     'ph_number': phoneController.text,
-    'address': AddressController.text,
+    'address': addressController.text,
     'fees': feesController.text,
     'years_of_experience': experienceController.text,
     'universities': universityController.text,
     'rating': "3.4",  // Assuming a static rating
     'verified': "false",
     'account_type': "Lawyer",
-    'preferences': jsonEncode(selectedSpecializations)
+    'specializations': jsonEncode(selectedSpecializations)
   };
 
   request.fields.addAll(fields);
@@ -168,217 +216,508 @@ void signUpLawyer() async {
     return Scaffold(
       backgroundColor: Color(0Xff9f98c9),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: -screenHeight * 0.05,
-                child: Image.asset(
-                  'assets/images/ellipse1.png',
-                  width: screenWidth * 0.30,
-                  height: screenWidth * 0.30,
-                ),
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: -screenHeight * 0.05,
+              child: Image.asset(
+                'assets/images/ellipse1.png',
+                width: screenWidth * 0.30,
+                height: screenWidth * 0.30,
               ),
-              Positioned(
-                left: screenWidth * -0.07,
-                top: screenHeight * 0.02,
-                child: Image.asset(
-                  'assets/images/ellipse2.png',
-                  width: screenWidth * 0.3,
-                  height: screenWidth * 0.3,
-                ),
+            ),
+            Positioned(
+              left: screenWidth * -0.07,
+              top: screenHeight * 0.02,
+              child: Image.asset(
+                'assets/images/ellipse2.png',
+                width: screenWidth * 0.3,
+                height: screenWidth * 0.3,
               ),
-              Container(
-                child: Column(
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: screenHeight * 0.140),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        "Welcome!",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      Text(
+                        "Let's get you connected to lawyers",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: BouncingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildCard1(screenHeight, screenWidth),
+                      _buildCard2(screenHeight, screenWidth),
+                      _buildCard3(screenHeight, screenWidth),
+                      _buildCard4(screenHeight, screenWidth),
+                      _buildCard5(screenHeight, screenWidth),
+                      _buildCard6(screenHeight, screenWidth),
+                      _buildCard7(screenHeight, screenWidth),
+                    ],
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.02), // Added for spacing
+                // MyButton2(
+                //   onTap: signUpUser, // Set the onTap function to signUpUser
+                // ),
+                SizedBox(height: screenHeight * 0.02), // Added for spacing
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: screenHeight * 0.140),
-                    Text(
-                      "Welcome, Lawyer",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    Text(
-                      "Sign up to connect with clients",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.025),
                     GestureDetector(
-                      onTap: () {
-                        _selectImage();
-                      },
-                      child: Container(
-                        width: screenWidth * 0.4,
-                        height: screenWidth * 0.4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        child: _image == null
-                            ? Icon(
-                                Icons.add_a_photo,
-                                size: 50,
-                                color: Colors.grey[400],
-                              )
-                            : Image.file(
-                                _image!,
-                                fit: BoxFit.cover,
-                              ),
+                      child: Text(
+                        "Already have an account?",
+                        style: TextStyle(color: Colors.black),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.025),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                      child: Column(
-                        children: [
-                          MyTextField(
-                            controller: firstnameController,
-                            hintText: 'First Name',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.text,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: lastnameController,
-                            hintText: 'Last Name',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.text,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: AddressController,
-                            hintText: 'Office Address',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.text,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: phoneController,
-                            hintText: 'Phone Number',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.phone,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: emailController,
-                            hintText: 'E-mail',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: passwordController,
-                            hintText: 'Password',
-                            obscureText: true,
-                            borderRadius: 30.0,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: feesController,
-                            hintText: 'Fees',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.number,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: experienceController,
-                            hintText: 'Years of Experience',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.number,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          MyTextField(
-                            controller: universityController,
-                            hintText: 'University',
-                            obscureText: false,
-                            borderRadius: 30.0,
-                            keyboardType: TextInputType.text,
-                          ),
-                          SizedBox(height: screenHeight * 0.010),
-                          Wrap(
-                            children: specializations.map((String value) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: ChoiceChip(
-                                  label: Text(value),
-                                  selected: selectedSpecializations.contains(value),
-                                  onSelected: (bool selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        selectedSpecializations.add(value);
-                                      } else {
-                                        selectedSpecializations.remove(value);
-                                      }
-                                    });
-                                  },
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                          SizedBox(height: screenHeight * 0.020),
-                        ],
+                    GestureDetector(
+                      onTap: navigateToLoginPage,
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 108, 9, 173),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    MyButton2(
-                      onTap: signUpLawyer,
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          child: Text(
-                            "Already have an account?",
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: navigateToLoginPage,
-                          
-                          child: Text(
-                            'Login',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 108, 9, 173),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Function to select image from gallery
- void _selectImage() async {
-  final picker = ImagePicker();
-  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-  setState(() {
-    if (pickedFile != null) {
-      _image = File(pickedFile.path);
-      print('Image Path: ${_image!.path}');  // Log the image path
-    } else {
-      print('No image selected.');
-    }
-  });
+Widget _buildCard1(double screenHeight, double screenWidth) {
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: screenHeight * 0.020),
+        MyTextField(
+          controller: firstnameController,
+          hintText: 'First Name',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.text,
+        ),
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: lastnameController,
+          hintText: 'Last Name',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.text,
+        ),
+        SizedBox(height: screenHeight * 0.020),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.arrow_back_ios), // Arrow icon
+              SizedBox(width: 8), // Adding space between icon and text
+              Text(
+                "Swipe Left",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
+
+
+  // Method for the second card
+// Method for the second card
+Widget _buildCard2(double screenHeight, double screenWidth) {
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: phoneController,
+          hintText: 'Phone Number',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.phone,
+        ),
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: addressController,
+          hintText: 'Address',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.text,
+        ),
+        SizedBox(height: screenHeight * 0.020),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Text(
+                "Swipe Left",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(width: 8), // Adding space between icon and text
+              Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+  // Method for the third card
+Widget _buildCard3(double screenHeight, double screenWidth) {
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: emailController,
+          hintText: 'Email',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.emailAddress,
+        ),
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: passwordController,
+          hintText: 'Password (Minimum 6 characters)',
+          obscureText: true,
+          borderRadius: 30.0,
+        ),
+        SizedBox(height: screenHeight * 0.020),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
+              SizedBox(width: 8), // Adding space between icon and text
+              Text(
+                "Swipe Left",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildCard4(double screenHeight, double screenWidth) {
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: universityController,
+          hintText: 'University',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.text,
+        ),
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: experienceController,
+          hintText: 'Experience',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.phone,
+        ),
+        SizedBox(height: screenHeight * 0.020),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Text(
+                "Swipe Left",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(width: 8), // Adding space between icon and text
+              Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildCard5(double screenHeight, double screenWidth) {
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: screenHeight * 0.010),
+        MyTextField(
+          controller: feesController,
+          hintText: 'Fees',
+          obscureText: false,
+          borderRadius: 30.0,
+          keyboardType: TextInputType.phone,
+        ),
+        SizedBox(height: screenHeight * 0.020),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Text(
+                "Swipe Left",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(width: 8), // Adding space between icon and text
+              Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  // Method for the fourth card (No changes needed)
+Widget _buildCard6(double screenHeight, double screenWidth) {
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          children: specializations.map((String value) {
+            return Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: ChoiceChip(
+                label: Text(
+                  value,
+                  style: TextStyle(fontSize: 10), // Decreased chip text size
+                ),
+                selected: selectedSpecializations.contains(value),
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedSpecializations.add(value);
+                    } else {
+                      selectedSpecializations.remove(value);
+                    }
+                  });
+                },
+                labelStyle:
+                    TextStyle(fontSize: 8), // Decreased chip label size
+              ),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: screenHeight * 0.020),
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
+              SizedBox(width: 8), // Adding space between icon and text
+              Text(
+                "Swipe Left",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+ Widget _buildCard7(double screenHeight, double screenWidth) {
+  _currentPageIndex = 6;
+  return Container(
+    color: Colors.transparent,
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(height: screenHeight * 0.025),
+        GestureDetector(
+          onTap: () {
+            _selectImage();
+          },
+          child: Container(
+            width: screenWidth * 0.4,
+            height: screenWidth * 0.4,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(screenWidth * 0.2),
+            ),
+            child: _image == null
+                ? Icon(
+                    Icons.add_a_photo,
+                    size: 50,
+                    color: Colors.grey[400],
+                  )
+                : ClipOval(
+                    child: Image.file(
+                      _image!,
+                      fit: BoxFit.cover,
+                      width: screenWidth * 0.4,
+                      height: screenWidth * 0.4,
+                    ),
+                  ),
+          ),
+        ),
+        SizedBox(height: screenHeight * 0.02), // Added for spacing
+        MyButton2(
+          onTap: signUpLawyer, // Set the onTap function to signUpUser
+        ),
+        SizedBox(height: screenHeight * 0.02), // Added for spacing
+      ],
+    ),
+  );
+}
+
+  // Function to select image from gallery
+  void _selectImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+        print('Image Path: ${_image!.path}'); // Log the image path
+      } else {
+        print('No image selected.');
+      }
+    });
+  }
 }

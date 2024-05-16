@@ -1,7 +1,59 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-class MyStatisticsPage extends StatelessWidget {
+import 'package:project/Screens/Global.dart';
+
+class MyStatisticsPage extends StatefulWidget {
+  final String token;
+  final Map<String, dynamic> userData;
+
+  MyStatisticsPage({required this.token, required this.userData});
+
+  @override
+  _MyStatisticsPageState createState() => _MyStatisticsPageState();
+}
+
+class _MyStatisticsPageState extends State<MyStatisticsPage> {
+  double meanRating = 0.0;
+  List<String> reviews = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRatings();
+  }
+
+  Future<void> fetchRatings() async {
+  final url = Uri.parse('${GlobalData().baseUrl}/api/lawyers/ratings/${widget.userData['id']}');
+  try {
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer ${widget.token}'}
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      double totalRating = 0.0;
+      List<String> reviewTexts = [];
+      for (var reviewData in data) {
+        totalRating += reviewData['ratings']; // Access 'ratings' as a double
+        reviewTexts.add(reviewData['comment_text']);
+      }
+      double mean = totalRating / data.length;
+      setState(() {
+        meanRating = mean;
+        reviews = reviewTexts;
+      });
+    } else {
+      print('Failed to fetch ratings: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error fetching ratings: $e');
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,77 +84,75 @@ class MyStatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMeanRatingCircle() {
-    // Assuming you have a mean rating value (replace 4.5 with your actual mean rating)
-    double meanRating = 4.5;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Average Rating',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+Widget _buildMeanRatingCircle() {
+  return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text(
+        'Average Rating',
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      SizedBox(height: 8),
+      Container(
+        width: 140, // Increased the width
+        height: 140, // Increased the height
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Color(0xFFb884d1), // Set the border color
+            width: 8, // Set the border thickness
+          ),
         ),
-        SizedBox(height: 8),
-        Container(
-          width: 140, // Increased the width
-          height: 140, // Increased the height
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Color(0xFFb884d1), // Set the border color
-              width: 8, // Set the border thickness
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 120, // Adjusted the width
+              height: 120, // Adjusted the height
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+              ),
             ),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 120, // Adjusted the width
-                height: 120, // Adjusted the height
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.transparent,
-                ),
+            Positioned(
+              top: 32, // Adjusted the position
+              child: Text(
+                meanRating.toStringAsFixed(1), // Use the fetched meanRating
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
-              Positioned(
-                top: 32, // Adjusted the position
-                child: Text(
-                  meanRating.toString(),
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Positioned(
-                bottom: 32, // Adjusted the position
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    5,
-                    (index) {
-                      double starValue = index + 1.0;
+            ),
+            Positioned(
+              bottom: 32, // Adjusted the position
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  5,
+                  (index) {
+                    double starValue = index + 1.0;
 
-                      // Use Icons.star or Icons.star_half based on the starValue
-                      IconData starIcon = starValue <= meanRating
-                          ? Icons.star
-                          : starValue - 0.5 <= meanRating
-                              ? Icons.star_half
-                              : Icons.star_border;
+                    // Use Icons.star or Icons.star_half based on the starValue
+                    IconData starIcon = starValue <= meanRating
+                        ? Icons.star
+                        : starValue - 0.5 <= meanRating
+                            ? Icons.star_half
+                            : Icons.star_border;
 
-                      return Icon(
-                        starIcon,
-                        color: Colors.yellow, // Set the color of the stars
-                        size: 20, // Set the size of the stars
-                      );
-                    },
-                  ),
+                    return Icon(
+                      starIcon,
+                      color: Colors.yellow, // Set the color of the stars
+                      size: 20, // Set the size of the stars
+                    );
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
+
 
   Widget _buildRecentReviews() {
     // Generate some random reviews for demonstration

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'package:project/Screens/Global.dart';
+import 'dart:convert';
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';  //For handling JSON encoding
-import 'package:project/Screens/forgot_pass.dart';
+import 'package:project/Screens/forgotpassword.dart';
+import 'package:project/Screens/home_screen.dart';
+import 'package:project/Screens/GoogleSignIn.dart';
+
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key? key}) : super(key: key);
@@ -13,46 +18,61 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final EmailController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool rememberMe = false;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  void signUserIn() async {
-  String Email = EmailController.text;
-  String password = passwordController.text;
+void signUserIn() async {
+  String email = emailController.text.trim();
+  String password = passwordController.text.trim();
 
   try {
     http.Response response = await http.post(
-      Uri.parse('http://192.168.10.2:300/api/clients'),
+      Uri.parse('${GlobalData().baseUrl}/api/login'),  // Use base URL from GlobalData
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'Email': Email,
+        'email': email,
         'password': password,
       }),
     );
 
     if (response.statusCode == 200) {
-      // Assuming the response body is the token or a success message
-      var data = jsonDecode(response.body);
-      print('Login successful: $data');
-      // Navigate to home or another appropriate screen
-      Navigator.pushReplacementNamed(context, '/home');
+      var responseData = jsonDecode(response.body);
+      var token = responseData['token'];
+      var userData = responseData['userData'];
+      var id = userData['id'];
+      var first_name = userData['first_name'];
+      var last_name = userData['last_name'];
+      var conversations =responseData['userData']['conversations']; // Extracting unique id from response
+      print("RESPONSE $response");
+      print('Token: $conversations'); 
+
+      print('Token: $token'); 
+      print('ID: $id');
+      print('First name: $first_name'); // Logging for debugging purposes
+      print('Last name: $last_name');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(token: token, userData: userData),
+        ),
+      );
+      GlobalData().setUserData(id, token, userData);
+
     } else {
-      // Error handling
-      print('Failed to log in: ${response.body}');
+      print('Failed to log in with status code: ${response.statusCode}. Response body: ${response.body}');
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Login Failed'),
-            content: Text('Invalid Email or password.'),
-            actions: [
+            content: Text('Invalid email or password.'),
+            actions: <TextButton>[
               TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                onPressed: () => Navigator.of(context).pop(),
                 child: Text('OK'),
               ),
             ],
@@ -62,17 +82,89 @@ class _LoginPageState extends State<LoginPage> {
     }
   } catch (e) {
     print('Error occurred: $e');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Network Error'),
+          content: Text('An error occurred. Please try again later.'),
+          actions: <TextButton>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
-
   void navigateToSignupPage() {
     Navigator.pushReplacementNamed(context, '/signup');
   }
 
-  void navigateToForgotPasswordPage()
-  {
-    Navigator.pushReplacementNamed(context, '/forgotPassword');
+void navigateToForgotPasswordPage(Map<String, dynamic> userData, String token) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ForgotPasswordPage(userData: userData, token: token),
+    ),
+  );
+}
+
+Future<void> signInWithGoogle() async {
+  try {
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    if (googleUser != null) {
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      String token = googleAuth.accessToken ?? "";
+      print("Google OAuth Token: $token");
+
+      var response = await http.post(
+        Uri.parse('${GlobalData().baseUrl}/api/auth/google'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'token': token,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        var userData = jsonDecode(response.body);
+        print('User Data: $userData');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(token: token, userData: userData),
+          ),
+        );
+      } else {
+        print('Failed to authenticate with Google. Status Code: ${response.statusCode}. Response: ${response.body}');
+      }
+    }
+  } catch (error) {
+    print('Error signing in with Google: $error');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Login Error'),
+          content: Text('Failed to sign in with Google. Error: $error'),
+          actions: <TextButton>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
+}
+
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -116,8 +208,8 @@ class _LoginPageState extends State<LoginPage> {
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 30.0),
                       child: MyTextField(
-                        controller: EmailController,
-                        hintText: 'E-Mail',
+                        controller: emailController,
+                        hintText: 'Email',
                         obscureText: false,
                         borderRadius: 30.0,
                       ),
@@ -179,7 +271,9 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           GestureDetector(
-                            onTap: navigateToForgotPasswordPage,
+                            onTap: () {
+                              navigateToForgotPasswordPage({}, ''); // Pass default values for userData and token
+                            },
                             child: Text(
                               'Forgot Password?',
                               style: TextStyle(
@@ -194,6 +288,7 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: screenHeight * 0.025),
                     MyButton(
                       onTap: signUserIn,
+                      buttonText: 'Sign In',  // Correctly provide the buttonText
                     ),
                     SizedBox(height: screenHeight * 0.05),
                     Padding(
@@ -230,11 +325,13 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30.0),
-                            color: Color(0xFF75A1A7),
-                          ),
+                        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30.0),
+                          color: Color(0xFF75A1A7),
+                        ),
+                        child: GestureDetector(
+                          onTap: signInWithGoogle, // Set the onTap to the signInWithGoogle method
                           child: Row(
                             children: [
                               Padding(
@@ -260,7 +357,10 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                         ),
-                        SizedBox(width: screenWidth * 0.05),
+                      ),
+                      
+                      SizedBox(width: screenWidth * 0.05),
+                      
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.04),

@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:project/Screens/editcasedetails.dart';
 import 'package:project/Screens/lawyercases.dart';
 
 class CaseDetailsPage extends StatelessWidget {
   final LawyerCase caseItem;
+  final String token; // Token received through constructor
 
-  CaseDetailsPage({required this.caseItem});
+  CaseDetailsPage({required this.caseItem, required this.token});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Case Details'),
-        backgroundColor: Color(0xFFDCBAFF), // Set app bar background color to dcbaff
+        backgroundColor: Color(0xFFDCBAFF),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EditCasePage(
+                  caseItem: caseItem,
+                  token: token, // Pass the token here
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       backgroundColor: Color(0xFFB884D1),
       body: Padding(

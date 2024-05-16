@@ -143,7 +143,7 @@ class LawyerContactsScreen extends StatelessWidget {
             CallsScreenPage(),
           ],
         ),
-        bottomNavigationBar: _buildNavBar(),
+        // bottomNavigationBar: _buildNavBar(),
       ),
     );
   }
@@ -155,53 +155,53 @@ class LawyerContactsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavBar() {
-    return Container(
-      color: Color(0xFFDCBAFF),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          IconButton(
-            icon: Icon(Icons.home),
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LawyerHomepage()),
-                (route) => false,
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.message,
-              color: Color(0xFF912bFF),
-            ),
-            onPressed: () {
-              // Handle messaging button press
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LawyerNotificationsPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LawyerSettingsPage()),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildNavBar() {
+  //   return Container(
+  //     color: Color(0xFFDCBAFF),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //       children: [
+  //         IconButton(
+  //           icon: Icon(Icons.home),
+  //           onPressed: () {
+  //             Navigator.pushAndRemoveUntil(
+  //               context,
+  //               MaterialPageRoute(builder: (context) => LawyerHomepage()),
+  //               (route) => false,
+  //             );
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.message,
+  //             color: Color(0xFF912bFF),
+  //           ),
+  //           onPressed: () {
+  //             // Handle messaging button press
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.notifications),
+  //           onPressed: () {
+  //             Navigator.push(
+  //               context,
+  //               MaterialPageRoute(builder: (context) => LawyerNotificationsPage()),
+  //             );
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.person),
+  //           onPressed: () {
+  //             Navigator.push(
+  //               context,
+  //               MaterialPageRoute(builder: (context) => LawyerSettingsPage()),
+  //             );
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildLastMessage(Lawyer lawyer) {
     // Display the last message and its timestamp

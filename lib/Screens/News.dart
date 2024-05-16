@@ -1,98 +1,111 @@
+//for newslink https://700f-2400-adca-116-bd00-bc82-d795-4c13-fcda.ngrok-free.app/recommend_news
+
+import 'dart:convert';
+//import 'dart:io';
+import 'dart:async';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:project/Screens/news_details_page.dart';
+import 'package:url_launcher/url_launcher.dart';
+// import 'package:project/Screens/news_details_page.dart';
 
-class NewsPage extends StatefulWidget {
+
+const Color appBarColor = Color(0xFFDCBAFF);
+
+class NewsPage extends StatelessWidget {
+  final String userId;
+
+  NewsPage({required this.userId});
+
   @override
-  _NewsPageState createState() => _NewsPageState();
-}
-
-class _NewsPageState extends State<NewsPage> {
-  List<String> newsTypes = ['All', 'Tech', 'Space', 'Breaking'];
-
-  String selectedFilter = 'All'; // Initially set to show all news
-
-  @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('NEWS'),
+        title: Text(
+          'NEWS',
+          style: TextStyle(color: Color(0xff30417c)),
+        ),
         centerTitle: true,
-        backgroundColor: Color(0xFFDCBAFF),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.filter_list),
-            itemBuilder: (BuildContext context) {
-              return newsTypes.map((String type) {
-                return PopupMenuItem<String>(
-                  value: type,
-                  child: Text(type),
-                );
-              }).toList();
-            },
-            onSelected: (String value) {
-              setState(() {
-                selectedFilter = value;
-              });
-            },
-          ),
-        ],
+        backgroundColor: appBarColor,
       ),
-      body: NewsList(selectedFilter: selectedFilter),
+      body: NewsList(userId: userId),
     );
   }
 }
 
-class NewsList extends StatelessWidget {
-  final String selectedFilter;
+class NewsList extends StatefulWidget {
+  final String userId;
 
-  NewsList({required this.selectedFilter});
+  NewsList({required this.userId});
+
+  @override
+  _NewsListState createState() => _NewsListState();
+}
+
+class _NewsListState extends State<NewsList> {
+  Future<List<NewsItem>> _fetchNews() async {
+  print("Fetching news for userId: ${widget.userId}");
+
+  int maxRetries = 2;
+  int retryCount = 0;
+  List<NewsItem> newsItems = [];
+
+  while (retryCount < maxRetries) {
+    try {
+      final response = await http.post(
+        Uri.parse('https://36fd-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommend_news'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': widget.userId}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        newsItems = List<NewsItem>.from(
+            data['articles'].map((item) => NewsItem.fromJson(item)));
+        break;
+      } else {
+        print('Failed to load news with status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to load news with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      retryCount += 1;
+      print('Error fetching news: $e. Retrying $retryCount/$maxRetries');
+      await Future.delayed(Duration(seconds: 120)); // Consider changing the delay as needed
+      if (retryCount >= maxRetries) {
+        print('Max retries reached. Throwing exception.');
+        throw Exception('Error fetching news: $e');
+      }
+    }
+  }
+
+  return newsItems;
+}
+
+
 
   @override
   Widget build(BuildContext context) {
-    List<NewsItem> news = [
-      NewsItem(
-        title: 'Breaking News: Flutter 3.0 Released!',
-        imageAsset: 'assets/images/News_Thumbnail.png',
-        fullArticleUrl: 'https://example.com/full_article1',
-        type: 'Breaking',
-        body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      ),
-      NewsItem(
-        title: 'Tech Giants Announce Collaboration on AI Research',
-        imageAsset: 'assets/images/News_Thumbnail.png',
-        fullArticleUrl: 'https://example.com/full_article2',
-        type: 'Tech',
-        body: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-      ),
-      NewsItem(
-        title: 'SpaceX Launches New Mission to Mars',
-        imageAsset: 'assets/images/News_Thumbnail.png',
-        fullArticleUrl: 'https://example.com/full_article3',
-        type: 'Space',
-        body: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
-      ),
-    ];
-
-    // Apply filtering
-    List<NewsItem> filteredNews = selectedFilter == 'All'
-        ? news
-        : news.where((newsItem) => newsItem.type == selectedFilter).toList();
-
-    return ListView.builder(
-      itemCount: filteredNews.length,
-      itemBuilder: (context, index) {
-        return Card(
-          elevation: 4.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: NewsCard(
-            title: filteredNews[index].title,
-            imageAsset: filteredNews[index].imageAsset,
-            fullArticleUrl: filteredNews[index].fullArticleUrl,
-            body: filteredNews[index].body,
-          ),
-        );
+    return FutureBuilder<List<NewsItem>>(
+      future: _fetchNews(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          print('Error fetching news: ${snapshot.error}');
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              final newsItem = snapshot.data![index];
+              return NewsCard(
+                newsItem: newsItem,
+              );
+            },
+          );
+        } else {
+          return Center(child: Text('No news articles found.'));
+        }
       },
     );
   }
@@ -100,81 +113,178 @@ class NewsList extends StatelessWidget {
 
 class NewsItem {
   final String title;
-  final String imageAsset;
-  final String fullArticleUrl;
-  final String type; // Added type field for filtering
-  final String body;
+  final String? urlToImage;
+  final String url;
+  final String description;
+  final String author;
+  final String source;
+  final String content;
 
   NewsItem({
     required this.title,
-    required this.imageAsset,
-    required this.fullArticleUrl,
-    required this.type,
-    required this.body,
+    this.urlToImage,
+    required this.url,
+    required this.description,
+    required this.author,
+    required this.source,
+    required this.content,
   });
+
+  factory NewsItem.fromJson(Map<String, dynamic> json) {
+    return NewsItem(
+      title: json['title'] ?? "",
+      urlToImage: json['urlToImage'],
+      url: json['url'] ?? "",
+      description: json['description'] ?? "",
+      author: json['author'] ?? "",
+      source: json['source']?['name'] ?? "",
+      content: json['content'] ?? "",
+    );
+  }
 }
 
+
 class NewsCard extends StatelessWidget {
-  final String title;
-  final String imageAsset;
-  final String fullArticleUrl;
-  final String body;
+  final NewsItem newsItem;
 
   NewsCard({
-    required this.title,
-    required this.imageAsset,
-    required this.fullArticleUrl,
-    required this.body,
+    required this.newsItem,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => NewsDetailsPage(
-              title: title,
-              imageAsset: imageAsset,
-            ),
-          ),
-        );
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            height: 150,
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(8.0)),
-              child: Image.asset(
-                imageAsset,
-                fit: BoxFit.cover,
+    return Card(
+      margin: EdgeInsets.all(8.0),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewsDetailsPage(
+                newsItem: newsItem,
               ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  body,
-                  style: TextStyle(fontSize: 16),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (newsItem.urlToImage != null)
+              Image.network(
+                newsItem.urlToImage!,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.description,
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+
+
+
+class NewsDetailsPage extends StatelessWidget {
+  final NewsItem newsItem;
+
+  NewsDetailsPage({
+    required this.newsItem,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('News Details'),
+        centerTitle: true,
+        backgroundColor: appBarColor,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (newsItem.urlToImage != null)
+              Image.network(
+                newsItem.urlToImage!,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.title,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Author: ${newsItem.author}',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Source: ${newsItem.source}',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.content,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: InkWell(
+                  onTap: () => launchURL(newsItem.url),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Read more',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $urlString';
+    }
+  }
+}
+

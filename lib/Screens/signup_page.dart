@@ -1,10 +1,14 @@
-import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:project/Screens/Global.dart';
+import 'package:project/Screens/UserVerificationPage.dart';
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
+
 
 class SignupPage extends StatefulWidget {
   SignupPage({Key? key}) : super(key: key);
@@ -13,55 +17,121 @@ class SignupPage extends StatefulWidget {
   _SignupPageState createState() => _SignupPageState();
 }
 
-
-
-
 class _SignupPageState extends State<SignupPage> {
-  final AddressController = TextEditingController();
-  final firstnameController = TextEditingController();
-  final lastnameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final TextEditingController firstnameController = TextEditingController();
+  final TextEditingController lastnameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
 
-  File? _image; // Store the selected image
+   List<String> preferences = [
+    'Criminal Law',
+    'Family Law',
+    'Corporate Law',
+    'Intellectual Property Law',
+  ];
+  List<String> selectedPreferences = [];
 
-  void signUpUser() async {
-  var uri = Uri.parse('http://10.0.2.2:3000/api/clients/register-client'); // Use your computer's IP address if on a real device
+  File? _image;
+
+ bool validateInputs() {
+  if (firstnameController.text.isEmpty ||
+      lastnameController.text.isEmpty ||
+      !emailController.text.contains('@') ||
+      passwordController.text.length < 6 ||
+      phoneController.text.isEmpty ||
+      addressController.text.isEmpty) {
+    print('Validation failed');
+    return false;
+  }
+  return true;
+}
+  
+  bool isValidEmail(String email) {
+  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  return regex.hasMatch(email);
+}
+
+void showErrorDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Error'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+
+void signUpUser() async {
+  if (!validateInputs()) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text('Please fill all the fields correctly.'),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+    return;
+  }
+
+  var uri = Uri.parse('${GlobalData().baseUrl}/api/clients/register-client');
   var request = http.MultipartRequest('POST', uri);
 
-  // Add all the text fields as parts of the request
-  request.fields['first_name'] = firstnameController.text.trim();
-  request.fields['last_name'] = lastnameController.text.trim();
-  request.fields['email'] = emailController.text.trim();
-  request.fields['ph_number'] = "234242345"; // Ideally, you should have a controller for this
-  request.fields['address'] = AddressController.text.trim();
-  request.fields['password'] = passwordController.text.trim();
-  request.fields['verified'] = "False";  // Since this is a boolean, make sure your backend can parse the string correctly
-  request.fields['preferences'] = jsonEncode(["Criminal Law", "Tax Law"]);  // Directly encoding the preferences
+  request.fields.addAll({
+    'first_name': firstnameController.text.trim(),
+    'last_name': lastnameController.text.trim(),
+    'email': emailController.text.trim(),
+    'ph_number': phoneController.text.trim(),
+    'address': addressController.text.trim(),
+    'password': passwordController.text.trim(),
+    'verified': "False",
+    'preferences': jsonEncode(selectedPreferences)
+  });
 
-  // Handling the file upload for the profile picture
   if (_image != null) {
     request.files.add(await http.MultipartFile.fromPath(
       'profile_picture',
       _image!.path,
+      contentType: MediaType('image', 'jpeg')
     ));
   }
 
-  // Send the request
   try {
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
+    var response = await request.send();
+    var responseBody = await response.stream.bytesToString(); // Read the stream here once
+    var data = jsonDecode(responseBody);
 
     if (response.statusCode == 200) {
       print('Registration successful');
-      // Navigate or perform other actions upon success
+      var tempKey = data['tempKey'];
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ClientOTPVerificationPage(tempKey: tempKey, profileImage: _image)),
+      );
     } else {
       print('Failed to register. Status code: ${response.statusCode}');
-      print('Reason: ${response.body}');
+      print('Failed reason: $responseBody');
+      showErrorDialog('Failed to register. Please try again.');
     }
   } catch (e) {
     print('Error occurred: $e');
+    showErrorDialog('An error occurred. Please try again.');
   }
 }
   void navigateToLoginPage() {
@@ -88,31 +158,41 @@ class _SignupPageState extends State<SignupPage> {
                   height: screenWidth * 0.30,
                 ),
               ),
+              Positioned(
+                left: screenWidth * -0.07,
+                top: screenHeight * 0.02,
+                child: Image.asset(
+                  'assets/images/ellipse2.png',
+                  width: screenWidth * 0.3,
+                  height: screenWidth * 0.3,
+                ),
+              ),
               Container(
                 child: Column(
                   children: [
                     SizedBox(height: screenHeight * 0.140),
                     Text(
-                      "Welcome aboard",
+                      "Welcome!",
                       style: TextStyle(
                         fontSize: 24,
                         fontFamily: 'Poppins',
                       ),
                     ),
                     Text(
-                      "Let's help you meet with the experts",
+                      "Let's get you connected to lawyers",
                       style: TextStyle(
                         fontSize: 18,
                         fontFamily: 'Poppins',
                       ),
                     ),
+                    SizedBox(height: screenHeight * 0.025),
                     GestureDetector(
                       onTap: () {
                         _selectImage();
                       },
                       child: Container(
-                        width: screenWidth * 0.3,
-                        height: screenWidth * 0.3,
+                        width: screenWidth * 0.4,
+                        height: screenWidth * 0.4,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(20.0),
@@ -139,6 +219,7 @@ class _SignupPageState extends State<SignupPage> {
                             hintText: 'First Name',
                             obscureText: false,
                             borderRadius: 30.0,
+                            keyboardType: TextInputType.text,
                           ),
                           SizedBox(height: screenHeight * 0.010),
                           MyTextField(
@@ -146,13 +227,23 @@ class _SignupPageState extends State<SignupPage> {
                             hintText: 'Last Name',
                             obscureText: false,
                             borderRadius: 30.0,
+                            keyboardType: TextInputType.text,
                           ),
                           SizedBox(height: screenHeight * 0.010),
                           MyTextField(
-                            controller: AddressController,
+                            controller: addressController,
                             hintText: 'Address',
                             obscureText: false,
                             borderRadius: 30.0,
+                            keyboardType: TextInputType.text,
+                          ),
+                          SizedBox(height: screenHeight * 0.010),
+                          MyTextField(
+                            controller: phoneController,
+                            hintText: 'Phone Number',
+                            obscureText: false,
+                            borderRadius: 30.0,
+                            keyboardType: TextInputType.phone,
                           ),
                           SizedBox(height: screenHeight * 0.010),
                           MyTextField(
@@ -160,6 +251,7 @@ class _SignupPageState extends State<SignupPage> {
                             hintText: 'E-mail',
                             obscureText: false,
                             borderRadius: 30.0,
+                            keyboardType: TextInputType.emailAddress,
                           ),
                           SizedBox(height: screenHeight * 0.010),
                           MyTextField(
@@ -168,67 +260,33 @@ class _SignupPageState extends State<SignupPage> {
                             obscureText: true,
                             borderRadius: 30.0,
                           ),
-                          SizedBox(height: screenHeight * 0.020),
+                          SizedBox(height: screenHeight * 0.010),
                         ],
                       ),
                     ),
+                    SizedBox(height: screenHeight * 0.010),
+                          Wrap(
+                            children: preferences.map((String value) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ChoiceChip(
+                                  label: Text(value),
+                                  selected: selectedPreferences.contains(value),
+                                  onSelected: (bool selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        selectedPreferences.add(value);
+                                      } else {
+                                        selectedPreferences.remove(value);
+                                      }
+                                    });
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
                     MyButton2(
                       onTap: signUpUser,
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: 'Poppins',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 9.5,
-                              horizontal: 16.0,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30.0),
-                              color: Color(0xFF75A1A7),
-                            ),
-                            child: Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Image.asset(
-                                    'lib/images/google.png',
-                                    width: 28,
-                                    height: 28,
-                                  ),
-                                ),
-                                VerticalDivider(
-                                  color: Colors.grey[400],
-                                  thickness: 1.0,
-                                  width: 1.0,
-                                ),
-                                Text(
-                                  'Continue with Google',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     Row(
@@ -242,6 +300,7 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                         GestureDetector(
                           onTap: navigateToLoginPage,
+                          
                           child: Text(
                             'Login',
                             style: TextStyle(
@@ -263,16 +322,17 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   // Function to select image from gallery
-  void _selectImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+ void _selectImage() async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path);
-      } else {
-        print('No image selected.');
-      }
-    });
-  }
+  setState(() {
+    if (pickedFile != null) {
+      _image = File(pickedFile.path);
+      print('Image Path: ${_image!.path}');  // Log the image path
+    } else {
+      print('No image selected.');
+    }
+  });
+}
 }

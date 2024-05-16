@@ -3,11 +3,25 @@ import 'package:project/Screens/Client_appointments.dart';
 
 class AppointmentDetailsPage extends StatelessWidget {
   final Appointment appointment;
+  final String token;
+  final Map<String, dynamic> userData;
+  final Map<String, dynamic> lawyerData;
 
-  AppointmentDetailsPage({required this.appointment});
+  AppointmentDetailsPage({
+    required this.appointment,
+    required this.token,
+    required this.userData,
+    required this.lawyerData,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final lawyerFirstName = lawyerData['first_name'] ?? 'Unknown';
+    final lawyerLastName = lawyerData['last_name'] ?? 'Lawyer';
+    final lawyerName = "$lawyerFirstName $lawyerLastName";
+    final profilePicture = lawyerData['profile_picture'] ??
+        'https://via.placeholder.com/150';  // Use a placeholder image if null
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFFDCBAFF),
@@ -36,19 +50,19 @@ class AppointmentDetailsPage extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: AssetImage('assets/lawyer_image.jpg'), // Replace with the actual image path
+                      backgroundImage: NetworkImage(profilePicture),
                     ),
                     SizedBox(width: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          appointment.lawyerName,
+                          lawyerName,
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 8),
                         Text(
-                          'Corporate Law', // Replace with the actual specialization
+                          lawyerData['specializations']?.join(", ") ?? 'Specializations not available',
                           style: TextStyle(fontSize: 16),
                         ),
                       ],
@@ -71,7 +85,7 @@ class AppointmentDetailsPage extends StatelessWidget {
                     contentPadding: EdgeInsets.only(left: 16, right: 16),
                     leading: Icon(Icons.calendar_today, color: Colors.black),
                     title: Text('Appointment date', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    subtitle: Text(_formatDate(appointment.dateTime), style: TextStyle(fontSize: 16)),
+                    subtitle: Text(_formatDate(appointment.appointmentDate), style: TextStyle(fontSize: 16)),
                   ),
                 ),
                 Align(
@@ -80,10 +94,9 @@ class AppointmentDetailsPage extends StatelessWidget {
                     contentPadding: EdgeInsets.only(left: 16, right: 16),
                     leading: Icon(Icons.access_time, color: Colors.black),
                     title: Text('Appointment time', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    subtitle: Text(_formatTime(appointment.dateTime), style: TextStyle(fontSize: 16)),
+                    subtitle: Text(_formatTime(appointment.appointmentDate), style: TextStyle(fontSize: 16)),
                   ),
                 ),
-                // Add more details here based on your Appointment class
               ],
             ),
           ),
@@ -97,6 +110,6 @@ class AppointmentDetailsPage extends StatelessWidget {
   }
 
   String _formatTime(DateTime dateTime) {
-    return "${dateTime.hour}:${dateTime.minute}";
+    return "${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}";
   }
 }

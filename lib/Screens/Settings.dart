@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:project/Screens/Client_appointments.dart';
-import 'package:project/Screens/Lawyerprofile.dart';
+import 'package:project/Screens/Global.dart';
 import 'package:project/Screens/News.dart';
 import 'package:project/Screens/contact_screen.dart';
 import 'package:project/Screens/home_screen.dart';
@@ -10,150 +12,110 @@ import 'package:project/Screens/reportanissue.dart';
 import 'package:project/Screens/FavoriteLawyersPage.dart';
 import 'package:project/Screens/ClientCase.dart';
 
-void main() {
-  runApp(MyApp());
+
+class SettingsPage extends StatefulWidget {
+  final String token;
+  final Map<String, dynamic> userData;
+  final List<dynamic> lawyerData;  // Change this to non-nullable if it's expected always
+
+  SettingsPage({
+    required this.token,
+    required this.userData,
+    required this.lawyerData,  // Ensure it's passed when creating the SettingsPage
+  });
+
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
 }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Settings',
-      home: SettingsPage(),
-    );
+
+class _SettingsPageState extends State<SettingsPage> {
+Map<String, dynamic> userData = {}; // Store user data here
+
+@override
+void initState() {
+super.initState();
+// fetchData(); // Fetch user data on init
+    print("hello! you are now on settings page!");
+    print("Token: ${widget.token}"); // Print the token
+    print("User Data: ${widget.userData}"); // Print all user data
+     if (widget.lawyerData != null) {
+      print("Lawyer Data: ${widget.lawyerData}");  // Print lawyer data if available
+    }
+    updateUserData(GlobalData().userData);
   }
-}
+  void updateUserData(Map<String, dynamic> newData) {
+    setState(() {
+      userData = GlobalData().userData; // Update user data
+    });
+  }
 
-class SettingsPage extends StatelessWidget {
-  @override
+
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFDCBAFF), // Set the AppBar background color
+        backgroundColor: Color(0xFFDCBAFF),
         title: Text(
           'My Profile',
-          style: TextStyle(
-            fontSize: 18.0, // Adjust the font size as needed
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true, // Center the title
+        centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Color(0xFFDCBAFF), // Set the container background color
+      body: Container(
+        color: Color(0xFFDCBAFF),  // Set the background color for the whole body
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(
+                      widget.userData.isNotEmpty ? userData['profile_picture'] : 'assets/images/profile.png'
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    widget.userData.isNotEmpty ? userData['first_name']+" "+userData['last_name'] : 'Loading...',
+                    style: TextStyle(color: Colors.white, fontSize: 18)
+                  ),
+                ],
+              ),
             ),
-            child: Align(
-              alignment: Alignment.center,
-              child: Container(
-                padding: EdgeInsets.all(16.0),
-                width: double.infinity,
-                child: Column(
+            Expanded(
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  )
+                ),
+                color: Colors.white, // Set the Card color to white
+                child: ListView(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: AssetImage(
-                        'assets/images/passport.png',
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Logged in as: John Doe',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
+                  _buildListTile(context, Icons.star, 'Favorite Lawyers', FavoriteLawyersPage(token: widget.token,userData: widget.userData)),
+                  _buildListTile(context, Icons.edit, 'View Profile', ClientProfilePage(token: widget.token, userData: widget.userData, )),
+                  _buildListTile(context, Icons.calendar_today, 'View Appointments', AppointmentsPage(token: widget.token, userData: widget.userData)),
+                  _buildListTile(context, Icons.folder, 'Cases', ClientCasesPage(token: widget.token, userData: widget.userData)),
+                  _buildListTile(context, Icons.insert_chart, 'Report', ReportIssuePage(token: widget.token, userData: widget.userData)),
+                 ],
                 ),
               ),
             ),
-          ),
-          SizedBox(height: 16),
-          // Static list of items
-          ListTile(
-            leading: Icon(Icons.star), // Add an appropriate icon for favorite lawyers
-            title: Text('Favorite Lawyers'),
-            onTap: () {
-          Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FavoriteLawyersPage(),
-                  ),
-                );
-          },
-          ),
-          ListTile(
-            leading: Icon(Icons.edit),
-            title: Text('Edit Profile'),
-            onTap: () {
-              // Simulate user type (replace with your actual logic to determine user type)
-              String userType = 'client'; // or 'lawyer'
-
-              if (userType == 'client') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ClientProfilePage(),
-                  ),
-                );
-              } else if (userType == 'lawyer') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LawyerProfilePage(),
-                  ),
-                );
-              }
-            },
-          ),
-          ListTile(
-  leading: Icon(Icons.calendar_today),
-  title: Text('View Appointments'),
-  onTap: () {
-    // Navigate to ClientAppointmentsPage
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AppointmentsPage(),
+          ],
+        ),
       ),
+      bottomNavigationBar: _buildNavBar(context),
     );
-  },
-),
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
-            onTap: () {
-              // Handle onTap for Settings
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.folder),
-            title: Text('Cases'),
-              onTap: () {
-              Navigator.push(
-              context,
-              MaterialPageRoute(
-              builder: (context) =>ClientCasesPage(),
-              ),
-              );
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.insert_chart),
-            title: Text('Report'),
-            onTap: () {
-              Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>ReportIssuePage(),
-      ),
-    );
-  },
-),
-        ],
-      ),
-      bottomNavigationBar: _buildNavBar(context), // Pass context here
+  }
+  Widget _buildListTile(BuildContext context, IconData icon, String title, Widget destinationPage) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => destinationPage)),
     );
   }
 
@@ -169,7 +131,7 @@ class SettingsPage extends StatelessWidget {
               // Navigate to the HomeScreen and remove all previous routes from the stack
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
+                MaterialPageRoute(builder: (context) => HomeScreen(token: widget.token, userData: widget.userData)),
                 (route) => false, // This will remove all previous routes from the stack
               );
             },
@@ -180,7 +142,7 @@ class SettingsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ContactsScreen(context: context),
+                  builder: (context) => ContactsScreen(),
                 ),
               );
             },
@@ -190,7 +152,7 @@ class SettingsPage extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NewsPage()),
+                MaterialPageRoute(builder: (context) => NewsPage(userId: '${widget.userData['id'].toString()}',)),
               );
             },
           ),
@@ -199,7 +161,7 @@ class SettingsPage extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => QnABoard()),
+                MaterialPageRoute(builder: (context) => QnABoard(token: widget.token, userData:widget.userData)),
               );
             },
           ),

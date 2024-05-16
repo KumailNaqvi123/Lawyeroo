@@ -86,50 +86,50 @@ class _LawyerNotificationsPageState extends State<LawyerNotificationsPage> {
           },
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+      // bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    return Container(
-      color: Color(0xFFDCBAFF),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          IconButton(
-            icon: Icon(Icons.home),
-            onPressed: () {
-              navigatorKey.currentState?.push(
-                MaterialPageRoute(builder: (context) => LawyerHomepage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.chat, color: Colors.black),
-            onPressed: () {
-              navigatorKey.currentState?.push(
-                MaterialPageRoute(builder: (context) => LawyerContactsScreen(context: context)),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.notifications, color: Color(0xFF912bFF)),
-            onPressed: () {
-              // Handle Notifications navigation
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.person, color: Colors.black),
-            onPressed: () {
-              navigatorKey.currentState?.push(
-                MaterialPageRoute(builder: (context) => LawyerSettingsPage()),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildBottomNavigationBar(BuildContext context) {
+  //   return Container(
+  //     color: Color(0xFFDCBAFF),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //       children: [
+  //         IconButton(
+  //           icon: Icon(Icons.home),
+  //           onPressed: () {
+  //             navigatorKey.currentState?.push(
+  //               MaterialPageRoute(builder: (context) => LawyerHomepage()),
+  //             );
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.chat, color: Colors.black),
+  //           onPressed: () {
+  //             navigatorKey.currentState?.push(
+  //               MaterialPageRoute(builder: (context) => LawyerContactsScreen(context: context)),
+  //             );
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.notifications, color: Color(0xFF912bFF)),
+  //           onPressed: () {
+  //             // Handle Notifications navigation
+  //           },
+  //         ),
+  //         IconButton(
+  //           icon: Icon(Icons.person, color: Colors.black),
+  //           onPressed: () {
+  //             navigatorKey.currentState?.push(
+  //               MaterialPageRoute(builder: (context) => LawyerSettingsPage()),
+  //             );
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   void _markAsRead(int index) {
     setState(() {

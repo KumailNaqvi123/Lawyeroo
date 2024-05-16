@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:project/Screens/Global.dart';
 import 'package:project/Screens/lawyerhomepage.dart';
 import 'package:mime/mime.dart';
+import 'package:project/lawyerlogin.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String tempKey;
@@ -27,50 +29,84 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
   }
 
   void verifyOTP() async {
-    var uri = Uri.parse('http://192.168.10.2:3000/api/lawyers/register-complete');
-    var request = http.MultipartRequest('POST', uri);
+ var uri = Uri.parse('${GlobalData().baseUrl}/api/lawyers/register-complete');
+  var request = http.MultipartRequest('POST', uri);
 
-    request.fields['tempKey'] = widget.tempKey;
-    request.fields['otp'] = otpController.text;
+  request.fields['tempKey'] = widget.tempKey;
+  request.fields['otp'] = otpController.text;
 
-    // Add the image to the request with the correct MIME type
-if (_profilePicture != null) {
-  // Safely access the path with a null check
-  String filePath = _profilePicture!.path; // This ensures that path is accessed only if _profilePicture is not null
-  String? mimeType = lookupMimeType(filePath); // Use lookupMimeType instead of mime
+  if (_profilePicture != null) {
+    String filePath = _profilePicture!.path;
+    String? mimeType = lookupMimeType(filePath);
 
-  if (mimeType != null) {
-    List<String> mimeTypes = mimeType.split('/'); // Split mimeType into type and subtype
-
-    request.files.add(await http.MultipartFile.fromPath(
-      'profile_picture',
-      filePath,
-      contentType: MediaType(mimeTypes[0], mimeTypes[1]),
-    ));
+    if (mimeType != null) {
+      List<String> mimeTypes = mimeType.split('/');
+      request.files.add(await http.MultipartFile.fromPath(
+        'profile_picture',
+        filePath,
+        contentType: MediaType(mimeTypes[0], mimeTypes[1]),
+      ));
+    }
   }
-}
 
-
-try {
-  var response = await request.send();
-  final responseBody = await response.stream.bytesToString();
-  var decodedResponse = json.decode(responseBody); // Decode the JSON response
-
-  if (response.statusCode == 200) {
+  try {
+    var response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    var decodedResponse = json.decode(responseBody);
+print("status code = $response.statusCode");
+    if (response.statusCode == 201) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Success"),
+            content: Text(decodedResponse['message']),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LawyerLoginPage()),
+                  );
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Failed"),
+            content: Text(decodedResponse['message']),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  } catch (e) {
+    print('Error occurred while sending request: $e');
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Success"),
-          content: Text(decodedResponse['message']),
+          title: Text("Error"),
+          content: Text("An error occurred. Please try again."),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LawyerHomepage()),
-                );
               },
               child: Text('OK'),
             ),
@@ -78,69 +114,75 @@ try {
         );
       },
     );
-  } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Failed"),
-          content: Text(decodedResponse['message']),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
   }
-} catch (e) {
-  print('Error occurred while sending request: $e');
 }
-  
+
+
+@override
+Widget build(BuildContext context) {
+  final screenHeight = MediaQuery.of(context).size.height;
+  final screenWidth = MediaQuery.of(context).size.width;
+
+  return Scaffold(
+    backgroundColor: Color(0xFF9F98C8), // Set background color
+    appBar: null, // Remove the app bar
+    body: SafeArea(
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: -screenHeight * 0.05,
+            child: Image.asset(
+              'assets/images/ellipse1.png',
+              width: screenWidth * 0.30,
+              height: screenWidth * 0.30,
+            ),
+          ),
+          Positioned(
+            left: screenWidth * -0.07,
+            top: screenHeight * 0.02,
+            child: Image.asset(
+              'assets/images/ellipse2.png',
+              width: screenWidth * 0.3,
+              height: screenWidth * 0.3,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  "Enter the OTP sent to your email",
+                  style: TextStyle(fontSize: 16.0),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: otpController,
+                  decoration: InputDecoration(
+                    labelText: "OTP",
+                    border: OutlineInputBorder(),
+                    filled: true, // Set filled to true
+                    fillColor: Colors.white, // Set fillColor to white
+                  ),
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => verifyOTP(),
+                  child: Text("Verify"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF1C798A), // Set button background color
+                    foregroundColor: Colors.white, // Set button text color
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Verify OTP"),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            if (_profilePicture != null)
-              Image.file(_profilePicture!),
-            Text(
-              "Enter the OTP sent to your email",
-              style: TextStyle(fontSize: 16.0),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: otpController,
-              decoration: InputDecoration(
-                labelText: "OTP",
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => verifyOTP(),
-              child: Text("Verify"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

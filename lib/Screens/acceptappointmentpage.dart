@@ -1,30 +1,39 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:project/Screens/Global.dart';
 
 class SetAppointmentDetailsPage extends StatefulWidget {
   final String request;
+  final String token;
 
-  SetAppointmentDetailsPage({required this.request});
+  SetAppointmentDetailsPage({required this.request, required this.token});
 
   @override
-  _SetAppointmentDetailsPageState createState() => _SetAppointmentDetailsPageState();
+  _SetAppointmentDetailsPageState createState() =>
+      _SetAppointmentDetailsPageState();
 }
 
 class _SetAppointmentDetailsPageState extends State<SetAppointmentDetailsPage> {
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
+  late Map<String, dynamic> requestMap;
+  late String appointmentTitle;
 
   @override
   void initState() {
     super.initState();
-    // Set initial date and time values
     _selectedDate = DateTime.now();
     _selectedTime = TimeOfDay.now();
+    requestMap = jsonDecode(widget.request);
+    appointmentTitle = requestMap['appointment_title'] ?? 'No title provided';
+    print("You are currently on acceptappointmentpage.dart");
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: _selectedDate,
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
@@ -38,12 +47,46 @@ class _SetAppointmentDetailsPageState extends State<SetAppointmentDetailsPage> {
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
+      initialTime: _selectedTime,
     );
     if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
       });
+    }
+  }
+
+  Future<void> _acceptAppointment() async {
+    final DateTime appointmentDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    print('accept appointment check1 ${GlobalData().baseUrl}');
+    print('accept appointment check2 ${requestMap['appointment_id']}');
+
+    final response = await http.put(
+      Uri.parse('${GlobalData().baseUrl}/api/appointments/status'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+      body: jsonEncode({
+        'appointment_id': requestMap['appointment_id'],
+        'status': 'accepted',
+        'date': appointmentDateTime.toIso8601String(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Appointment accepted!');
+      Navigator.pop(context, true);
+    } else {
+      print("response ${response.statusCode}");
+      print('Failed to accept appointment');
     }
   }
 
@@ -66,7 +109,7 @@ class _SetAppointmentDetailsPageState extends State<SetAppointmentDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Request\n: ${widget.request}',
+                    'Appointment Title: $appointmentTitle',
                     style: TextStyle(fontSize: 18),
                   ),
                   SizedBox(height: 16),
@@ -131,10 +174,7 @@ class _SetAppointmentDetailsPageState extends State<SetAppointmentDetailsPage> {
                   ),
                   SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
-                      // Handle accept action
-                      print('Appointment accepted!');
-                    },
+                    onPressed: _acceptAppointment,
                     child: Container(
                       width: double.infinity, // Make the button full width
                       child: Center(
@@ -151,3 +191,4 @@ class _SetAppointmentDetailsPageState extends State<SetAppointmentDetailsPage> {
     );
   }
 }
+

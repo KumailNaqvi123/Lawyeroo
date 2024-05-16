@@ -1,129 +1,83 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'dart:math';
-
+import 'package:http/http.dart' as http;
+import 'package:project/Screens/create_case.dart';
 import 'package:project/Screens/acceptappointmentpage.dart';
+import 'package:project/Screens/Global.dart';
+import 'package:project/Screens/LawyerAppointment.dart';
 
-class Lawyer {
-  final int lawyerId;
-  final String lawyerName;
-
-  Lawyer({
-    required this.lawyerId,
-    required this.lawyerName,
-  });
-}
-
-class LawyerAppointment {
-  final int serialNumber;
-  final int clientId;
-  final int caseId;
-  final int lawyerId;
-  final Lawyer lawyer;
-  final DateTime appointmentTime;
-  final DateTime createdAt;
-  final String appointmentStatus;
-  final String clientName; // Additional field for client name
-
-  LawyerAppointment({
-    required this.serialNumber,
-    required this.clientId,
-    required this.caseId,
-    required this.lawyerId,
-    required this.lawyer,
-    required this.appointmentTime,
-    required this.createdAt,
-    required this.appointmentStatus,
-    required this.clientName,
-  });
-}
 
 class LawyerAppointmentsPage extends StatefulWidget {
+  final String lawyerId;
+  final String token;
+
+  LawyerAppointmentsPage({required this.lawyerId, required this.token});
+
   @override
-  _AppointmentsPageState createState() => _AppointmentsPageState();
+  _LawyerAppointmentsPageState createState() =>
+      _LawyerAppointmentsPageState();
 }
 
-class _AppointmentsPageState extends State<LawyerAppointmentsPage> {
-  List<LawyerAppointment> appointments = [];
+class _LawyerAppointmentsPageState extends State<LawyerAppointmentsPage> {
+  List<LawyerAppointment> inProgressAppointments = [];
+  List<LawyerAppointment> pendingAppointments = [];
   List<LawyerAppointment> pastAppointments = [];
-  List<String> pendingRequests = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    generateDummyAppointments();
-    generateDummyPastAppointments();
-    generateDummyPendingRequests();
+    fetchAppointments();
   }
 
-  void generateDummyAppointments() {
-    final Random random = Random();
-    final List<Lawyer> lawyers = [
-      Lawyer(lawyerId: 301, lawyerName: 'John Doe'),
-      Lawyer(lawyerId: 302, lawyerName: 'Jane Smith'),
-      Lawyer(lawyerId: 303, lawyerName: 'Alice Johnson'),
-    ];
-
-    for (int i = 1; i <= 5; i++) {
-      final Lawyer randomLawyer = lawyers[random.nextInt(lawyers.length)];
-      final DateTime now = DateTime.now();
-      final DateTime appointmentTime = now.add(Duration(days: i, hours: random.nextInt(24)));
-      final DateTime createdAt = now.subtract(Duration(days: i));
-
-      appointments.add(
-        LawyerAppointment(
-          serialNumber: i,
-          clientId: 101,
-          caseId: 201,
-          lawyerId: randomLawyer.lawyerId,
-          lawyer: randomLawyer,
-          appointmentTime: appointmentTime,
-          createdAt: createdAt,
-          appointmentStatus: 'In Progress',
-          clientName: 'Client $i', // Replace with actual client names
-        ),
-      );
+  Future<void> fetchAppointments() async {
+    final response = await http.get(
+      Uri.parse('${GlobalData().baseUrl}/api/appointments/${widget.lawyerId}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}', // Use the token here
+      },
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body)['data'];
+      setState(() {
+        inProgressAppointments = data
+            .where((appointment) => appointment['appointment_status'] == 'accepted')
+            .map((json) => LawyerAppointment.fromJson(json))
+            .toList();
+        pendingAppointments = data
+            .where((appointment) => appointment['appointment_status'] == 'pending')
+            .map((json) => LawyerAppointment.fromJson(json))
+            .toList();
+        pastAppointments = data
+            .where((appointment) => appointment['appointment_status'] == 'past')
+            .map((json) => LawyerAppointment.fromJson(json))
+            .toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
-  void generateDummyPastAppointments() {
-    final Random random = Random();
-    final List<Lawyer> lawyers = [
-      Lawyer(lawyerId: 301, lawyerName: 'John Doe'),
-      Lawyer(lawyerId: 302, lawyerName: 'Jane Smith'),
-      Lawyer(lawyerId: 303, lawyerName: 'Alice Johnson'),
-    ];
+  Future<void> deleteAppointment(String appointmentId) async {
+    final response = await http.delete(
+      Uri.parse('${GlobalData().baseUrl}/api/appointments/$appointmentId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
 
-    for (int i = 1; i <= 5; i++) {
-      final Lawyer randomLawyer = lawyers[random.nextInt(lawyers.length)];
-      final DateTime now = DateTime.now();
-      final DateTime appointmentTime = now.subtract(Duration(days: i));
-      final DateTime createdAt = now.subtract(Duration(days: i + 2));
-
-      pastAppointments.add(
-        LawyerAppointment(
-          serialNumber: i,
-          clientId: 101,
-          caseId: 201,
-          lawyerId: randomLawyer.lawyerId,
-          lawyer: randomLawyer,
-          appointmentTime: appointmentTime,
-          createdAt: createdAt,
-          appointmentStatus: 'Past',
-          clientName: 'Client $i', // Replace with actual client names
-        ),
-      );
-    }
-  }
-
-  void generateDummyPendingRequests() {
-    final Random random = Random();
-    final List<String> names = ['John Doe', 'Jane Smith', 'Alice Johnson'];
-
-    for (int i = 1; i <= 3; i++) {
-      final String randomName = names[random.nextInt(names.length)];
-      final String request =
-          '$randomName is requesting an appointment regarding his case with you';
-      pendingRequests.add(request);
+    if (response.statusCode == 200) {
+      // Successfully deleted
+      print("Appointment deleted: $appointmentId");
+    } else {
+      // Handle error
+      print("status = ${widget.token}");
+      print("Failed to delete appointment: $appointmentId");
     }
   }
 
@@ -138,26 +92,28 @@ class _AppointmentsPageState extends State<LawyerAppointmentsPage> {
           bottom: TabBar(
             tabs: [
               Tab(text: 'In Progress'),
-              Tab(text: 'Past'),
               Tab(text: 'Pending'),
+              Tab(text: 'Past'),
             ],
           ),
         ),
         backgroundColor: Color(0xFFB884D1),
-        body: TabBarView(
-          children: [
-            _buildAppointmentList(appointments),
-            _buildAppointmentList(pastAppointments),
-            _buildPendingRequestsList(),
-          ],
-        ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : TabBarView(
+                children: [
+                  _buildAppointmentList(inProgressAppointments),
+                  _buildPendingRequestsList(),
+                  _buildAppointmentList(pastAppointments),
+                ],
+              ),
       ),
     );
   }
 
   Widget _buildAppointmentList(List<LawyerAppointment> appointmentList) {
     return ListView.builder(
-      itemCount: min(5, appointmentList.length),
+      itemCount: appointmentList.length,
       itemBuilder: (context, index) {
         return _buildAppointmentCard(appointmentList[index]);
       },
@@ -165,49 +121,48 @@ class _AppointmentsPageState extends State<LawyerAppointmentsPage> {
   }
 
   Widget _buildPendingRequestsList() {
-    return pendingRequests.isEmpty
+    return pendingAppointments.isEmpty
         ? Center(child: Text('No pending requests'))
         : ListView.builder(
-            itemCount: pendingRequests.length,
+            itemCount: pendingAppointments.length,
             itemBuilder: (context, index) {
-              return _buildPendingRequestCard(pendingRequests[index], index);
+              return _buildPendingRequestCard(pendingAppointments[index]);
             },
           );
   }
 
   Widget _buildAppointmentCard(LawyerAppointment appointment) {
-    return Card(
-      color: Colors.grey[200],
-      margin: EdgeInsets.all(8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Serial Number: ${appointment.serialNumber}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Client ID: ${appointment.clientId}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Case ID: ${appointment.caseId}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Lawyer ID: ${appointment.lawyerId}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Lawyer: ${appointment.lawyer.lawyerName}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Time: ${_formatDateTime(appointment.appointmentTime)}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Created At: ${_formatDateTime(appointment.createdAt)}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Status: ${appointment.appointmentStatus}', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            if (appointment.appointmentStatus == 'In Progress') Text('Client: ${appointment.clientName}', style: TextStyle(fontSize: 16)),
-          ],
+    return GestureDetector(
+      onLongPress: () {
+        _showCreateCasePopup(appointment);
+      },
+      child: Card(
+        color: Colors.grey[200],
+        margin: EdgeInsets.all(8.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Client ID: ${appointment.clientId}',
+                  style: TextStyle(fontSize: 16)),
+              SizedBox(height: 8),
+              Text('${appointment.appointmentTitle}',
+                  style: TextStyle(fontSize: 16)),
+              SizedBox(height: 8),
+              Text('Appointment Date: ${_formatDateTime(appointment.appointmentDate)}',
+                  style: TextStyle(fontSize: 16)),
+              SizedBox(height: 8),
+              Text('Status: ${appointment.appointmentStatus}',
+                  style: TextStyle(fontSize: 16)),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPendingRequestCard(String request, int index) {
+  Widget _buildPendingRequestCard(LawyerAppointment appointment) {
     return Card(
       color: Colors.grey[200],
       margin: EdgeInsets.all(8.0),
@@ -216,27 +171,38 @@ class _AppointmentsPageState extends State<LawyerAppointmentsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(request, style: TextStyle(fontSize: 16)),
+            Text('Appointment ID: ${appointment.appointmentId}',
+                style: TextStyle(fontSize: 16)),
+            SizedBox(height: 8),
+            Text('Client ID: ${appointment.clientId}',
+                style: TextStyle(fontSize: 16)),
+            SizedBox(height: 8),
+            Text('Appointment Title: ${appointment.appointmentTitle}',
+                style: TextStyle(fontSize: 16)),
             SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    // Navigate to the SetAppointmentDetailsPage when "View" is pressed
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => SetAppointmentDetailsPage(request: request),
+                        builder: (context) => SetAppointmentDetailsPage(
+                          request: jsonEncode(appointment.toJson()),
+                          token: widget.token,
+                        ),
                       ),
                     );
                   },
                   child: Text('View'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Handle reject action
-                    _rejectPendingRequest(index);
+                  onPressed: () async {
+                    await deleteAppointment(appointment.appointmentId);
+                    setState(() {
+                      pendingAppointments.remove(appointment);
+                    });
                   },
                   child: Text('Reject'),
                 ),
@@ -248,20 +214,42 @@ class _AppointmentsPageState extends State<LawyerAppointmentsPage> {
     );
   }
 
-  void _rejectPendingRequest(int index) {
-    setState(() {
-      // Remove the entry from the list
-      pendingRequests.removeAt(index);
-    });
-  }
-
   String _formatDateTime(DateTime dateTime) {
     return "${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}";
   }
-}
 
-void main() {
-  runApp(MaterialApp(
-    home: LawyerAppointmentsPage(),
-  ));
+  void _showCreateCasePopup(LawyerAppointment appointment) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Create Case"),
+          content: Text("Would you like to create a case for this appointment?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CaseCreationPage(
+                      token: widget.token,
+                      appointment: appointment,
+                    ),
+                  ),
+                );
+              },
+              child: Text("Create Case"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:project/Screens/News.dart';
+import 'package:project/Screens/Lnews.dart';
 import 'package:project/Screens/Lawyer_appointments.dart';
+import 'package:project/Screens/contact_screen.dart';
 import 'package:project/Screens/lawyercontactscreen.dart';
 import 'package:project/Screens/lawyernotificiations.dart';
+import 'package:project/Screens/lawyerqna.dart';
 import 'package:project/Screens/lawyersettings.dart';
-import 'package:project/Screens/qna_board.dart';
 import 'package:project/Screens/BlogsAndArticles.dart';
 
-
 class LawyerHomepage extends StatefulWidget {
+  final String token;
+  final Map<String, dynamic> userData;
+
+  LawyerHomepage({Key? key, required this.token, required this.userData});
+
   @override
   _LawyerHomepageState createState() => _LawyerHomepageState();
 }
@@ -18,13 +23,22 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      navigatorKey: navigatorKey,
-      home: Scaffold(
-        appBar: _buildAppBar(),
-        body: _buildBody(),
-        bottomNavigationBar: _buildBottomNavigationBar(),
+    return WillPopScope(
+      onWillPop: () async {
+        if (navigatorKey.currentState!.canPop()) {
+          navigatorKey.currentState!.pop();
+          return false;
+        }
+        return true;
+      },
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
+        home: Scaffold(
+          appBar: _buildAppBar(),
+          body: _buildBody(),
+          bottomNavigationBar: _buildBottomNavigationBar(),
+        ),
       ),
     );
   }
@@ -37,7 +51,7 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(
-            'assets/images/logo.png',
+            'assets/images/L.png',
             height: 30,
             width: 30,
           ),
@@ -66,13 +80,6 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20.0),
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  border: InputBorder.none,
-                  icon: Icon(Icons.search),
-                ),
               ),
             ),
           ),
@@ -111,7 +118,12 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => LawyerHomepage()),
+                MaterialPageRoute(
+                  builder: (context) => LawyerHomepage(
+                    token: widget.token,
+                    userData: widget.userData,
+                  ),
+                ),
                 (route) => false,
               );
             },
@@ -122,7 +134,7 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LawyerContactsScreen(context: context),
+builder: (context) => ContactsScreen(),
                 ),
               );
             },
@@ -130,7 +142,6 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
           IconButton(
             icon: Icon(Icons.notifications, color: Colors.black),
             onPressed: () {
-
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => LawyerNotificationsPage()),
@@ -142,7 +153,9 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LawyerSettingsPage()),
+                MaterialPageRoute(
+                    builder: (context) =>
+                        LawyerSettingsPage(token: widget.token, userData: widget.userData)),
               );
             },
           ),
@@ -158,7 +171,7 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
       case 1:
         return 'News';
       case 2:
-        return 'Blogs & Articles ';
+        return 'Legal Blogs';
       case 3:
         return 'Q&A Board';
       default:
@@ -182,32 +195,51 @@ class _LawyerHomepageState extends State<LawyerHomepage> {
   }
 
   void handleFeatureTap(int index) {
-    switch (index) {
-      case 0:
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (context) => LawyerAppointmentsPage()),
-        );
-        break;
-      case 1:
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (context) => NewsPage()
-          )
-        );
-        break;
-      case 2:
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (context) => LawyerBlogsPage()
-          )
-        );
-        break;
-      case 3:
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (context) => QnABoard()
-          )
-        );
-        break;
-    }
+  switch (index) {
+    case 0:
+      final lawyerId = widget.userData['id']?.toString() ?? '';
+      if (lawyerId.isEmpty) {
+        print("Error: Lawyer ID is empty");
+        return;
+      }
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => LawyerAppointmentsPage(
+            lawyerId: lawyerId,
+            token: widget.token,
+          ),
+        ),
+      );
+      break;
+    case 1:
+      final lawyerId = widget.userData['id']?.toString() ?? '';
+      if (lawyerId.isEmpty) {
+        print("Error: Lawyer ID is empty");
+        return;
+      }
+      navigatorKey.currentState?.push(
+          MaterialPageRoute(
+              builder: (context) => LNewsPage(userId: lawyerId),
+          ),
+      );
+      break;
+    case 2:
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (context) => LawyerBlogsPage(token: widget.token, userData: widget.userData)),
+      );
+      break;
+    case 3:
+      // Printing token and userData to the console
+      print("Navigating to Q&A Board with token: ${widget.token} and userData: ${widget.userData}");
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => LawyerQnABoard(
+              token: widget.token, userData: widget.userData),
+        ),
+      );
+      break;
   }
+}
 }
 
 class FeatureItemWidget extends StatelessWidget {
@@ -265,6 +297,3 @@ class FeatureItemWidget extends StatelessWidget {
   }
 }
 
-void main() {
-  runApp(LawyerHomepage());
-}

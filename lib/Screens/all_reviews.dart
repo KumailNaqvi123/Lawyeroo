@@ -1,30 +1,104 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:project/Screens/Global.dart';
+import 'package:intl/intl.dart';
 
-class AllReviewsScreen extends StatelessWidget {
+
+class AllReviewsScreen extends StatefulWidget {
+  final String lawyerId;
+  final String token;
+
+  AllReviewsScreen({required this.lawyerId, required this.token});
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Center(child: Text('All Reviews')),
-        backgroundColor: Color(0xFFdcbaff),
-      ),
-      body: ListView.builder(
-        itemCount: 15,
-        itemBuilder: (context, index) {
-          return _buildReviewWidget(index);
-        },
-      ),
+  _AllReviewsScreenState createState() => _AllReviewsScreenState();
+}
+
+class _AllReviewsScreenState extends State<AllReviewsScreen> {
+  List<dynamic> reviews = [];
+  bool isLoading = true;
+  String errorMessage = '';
+
+ @override
+void initState() {
+  super.initState();
+  // Print lawyerId and Bearer token to the console for debugging
+  print('Lawyer ID: ${widget.lawyerId}');
+  print('Bearer Token: ${widget.token}');
+  _fetchReviews();
+}
+
+
+Future<void> _fetchReviews() async {
+  try {
+    var url = Uri.parse('${GlobalData().baseUrl}/api/lawyers/ratings/${widget.lawyerId}');
+    var response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
     );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      var decodedResponse = jsonDecode(response.body);
+      print('Decoded response: $decodedResponse'); // Debug print the decoded response
+      setState(() {
+        reviews = decodedResponse;
+        isLoading = false;
+      });
+    } else {
+      throw Exception('Failed to load reviews with status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Exception caught while fetching reviews: $e');
+    setState(() {
+      errorMessage = e.toString();
+      isLoading = false;
+    });
   }
+}
 
-  Widget _buildReviewWidget(int index) {
-    // Generate random data
-    final String reviewerName = '${_generateRandomName()}';
-    final String reviewText = '${_generateRandomReview()}';
-    final String dateOfReview = '\nSubmitted on: ${_generateRandomDate()}';
 
-    return Container(
+
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text('All Reviews'),
+      backgroundColor: Color(0xFFdcbaff), // AppBar color
+    ),
+    backgroundColor: Color(0xFFdcbaff), // Make background color same as AppBar
+    body: isLoading
+        ? Center(child: CircularProgressIndicator())
+        : errorMessage.isNotEmpty
+          ? Text('Error: $errorMessage')
+          : ListView.builder(
+              itemCount: reviews.length,
+              itemBuilder: (context, index) {
+                return _buildReviewWidget(reviews[index]);
+              },
+            ),
+  );
+}
+
+Widget _buildReviewWidget(dynamic review) {
+  var client = review['client'] ?? {}; // Default to an empty map if client is null
+  String fullName = "${client['first_name'] ?? 'Anonymous'} ${client['last_name'] ?? ''}";
+  double rating = (review['ratings'] as num).toDouble(); // Ensure rating is always a double
+  String reviewText = review['comment_text'] ?? "No comment provided."; // Default text
+  String profilePicture = client['profile_picture'] ?? 'assets/images/default_avatar.jpg'; // Default profile picture
+
+  // Parsing and formatting the date
+  String rawDate = review['created_at'] ?? "";
+  String formattedDate = formatDate(rawDate);
+
+  return Card(
+    margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+    child: Padding(
       padding: EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,64 +107,52 @@ class AllReviewsScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20.0,
-                backgroundImage: AssetImage('assets/images/passport.png'),
+                backgroundImage: NetworkImage(profilePicture),
               ),
               SizedBox(width: 8.0),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(reviewerName),
-                  Row(
-                    children: List.generate(5, (starIndex) {
-                      return Icon(
-                        Icons.star,
-                        color: Colors.yellow,
-                        size: 16.0, // Adjust the size as needed
-                      );
-                    }),
-                  ),
-                ],
+              Expanded( // Make text not overflow
+                child: Text(
+                  fullName,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis, // Prevents text overflow
+                ),
               ),
             ],
           ),
           SizedBox(height: 8.0),
-          Text(reviewText),
-          Text(dateOfReview),
-          Divider(),
+          Row(
+            children: List.generate(5, (starIndex) {
+              return Icon(
+                starIndex < rating ? Icons.star : Icons.star_border,
+                color: Colors.amber,
+                size: 20.0,
+              );
+            }),
+          ),
+          SizedBox(height: 8.0),
+          Text(
+            reviewText,
+            style: TextStyle(fontSize: 14, color: Colors.black),
+          ),
+          SizedBox(height: 4.0),
+          Text(
+            'Submitted on: $formattedDate',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
-    );
+    ),
+  );
+}
+
+String formatDate(String dateStr) {
+  if (dateStr.isEmpty) return "Date not available";
+  try {
+    DateTime parsedDate = DateTime.parse(dateStr);
+    return DateFormat('MMMM dd, yyyy – hh:mm a').format(parsedDate);
+  } catch (e) {
+    print('Error parsing date: $e');
+    return "Invalid date";
   }
-
-  String _generateRandomName() {
-    final List<String> names = ['Ahmed', 'Ali', 'Hassan', 'Hamza', 'Usama'];
-    return names[Random().nextInt(names.length)];
-  }
-
-  String _generateRandomReview() {
-    final List<String> reviews = [
-      'Excellent service, highly recommended!',
-      'Amazing service, still has room for improvement.',
-      'Very professional and knowledgeable.',
-      'Great communication skills.'
-    ];
-    return reviews[Random().nextInt(reviews.length)];
-  }
-
-  String _generateRandomDate() {
-    // Generate random date within the last month
-    final DateTime now = DateTime.now();
-    final int randomDay = Random().nextInt(30) + 1; // Random day between 1 and 30
-    final DateTime randomDate = now.subtract(Duration(days: randomDay));
-
-    // Format the date
-    final String formattedDate =
-        '${_addLeadingZero(randomDate.day)}/${_addLeadingZero(randomDate.month)}/${randomDate.year}';
-
-    return formattedDate;
-  }
-
-  String _addLeadingZero(int number) {
-    return number.toString().padLeft(2, '0');
-  }
+}
 }

@@ -1,276 +1,175 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:project/Screens/News.dart';
-import 'package:project/Screens/Settings.dart';
-import 'package:project/Screens/calls_screen.dart';
-import 'package:project/Screens/home_screen.dart';
-import 'package:project/Screens/qna_board.dart';
+import 'package:http/http.dart' as http;
+import 'package:project/Screens/Global.dart';
 
 class Message {
-  final String sender;
+  final String senderId;
   final String text;
   final DateTime timestamp;
 
-  Message(this.sender, this.text, this.timestamp);
+  Message(this.senderId, this.text, this.timestamp);
 }
 
 class ChatScreen extends StatefulWidget {
-  final String contact;
-
-  ChatScreen({required this.contact});
+  final String? conversationId;
+  final String firstName;
+  final String lastName;
+  final String profilePicture;
+  final String senderId;
+  ChatScreen({
+    this.conversationId,
+    required this.senderId,
+    required this.firstName,
+    required this.lastName,
+    required this.profilePicture,
+  });
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  Map<String, List<Message>> _contactMessages = {};
+  List<Message> _messages = [];
   TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Add the initial messages
-    _addInitialMessages(widget.contact);
-    _addInitialMessages2('Ahmed');
-    _addInitialMessages3('Hamza');
+    if (widget.conversationId != null) {
+      _fetchMessages();
+    }
   }
 
-  // Function to add the initial messages for a specific contact
-  void _addInitialMessages(String contact) {
-    _contactMessages[contact] = [
-      Message(
-        contact,
-        'Hi, this is $contact. How are you?',
-        DateTime.now().subtract(Duration(minutes: 10)),
-      ),
-    ];
-  }
+ Future<void> _fetchMessages() async {
+  if(widget.conversationId != null) {
+    try {
+      final url = '${GlobalData().baseUrl}/api/messages/${widget.conversationId}';
+      print('Fetching messages from: $url');
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer ${GlobalData().token}', // Replace with your actual token
+        },
+      );
 
-  void _addInitialMessages2(String contact) {
-    _contactMessages[contact] = [
-      Message(
-        contact,
-        'Hello, how\'s it going?',
-        DateTime.now().subtract(Duration(minutes: 15)),
-      ),
-    ];
-  }
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+ if (response.statusCode == 200) {
+  final List<dynamic> data = json.decode(response.body);
+  setState(() {
+    _messages = data.map((messageData) {
+      // Handle parsing errors by providing default values or skipping invalid data
+      final senderId = messageData['senderId'] ?? '';
+      final messageText = messageData['messageText'] ?? '';
+      final timestamp = messageData['timestamp'] is String
+          ? DateTime.parse(messageData['timestamp'])
+          : DateTime.now(); // Use current time if parsing fails
 
-  void _addInitialMessages3(String contact) {
-    _contactMessages[contact] = [
-      Message(
-        contact,
-        'Hey there!',
-        DateTime.now().subtract(Duration(minutes: 20)),
-      ),
-    ];
+      return Message(
+        senderId,
+        messageText,
+        timestamp,
+      );
+    }).toList();
+  });
+} else {
+  throw Exception('Failed to fetch messages');
+}
+
+    } catch (error) {
+      print('Error fetching messages: $error');
+    }
+  } else {
+    print('Conversation ID is null, cannot fetch messages');
   }
+}
+
+Future<void> _sendMessage(String text) async {
+  try {
+    final senderId = widget.senderId;
+    final receiverId = GlobalData().userData['id'];
+    
+    print('Sending message:');
+    print('Sender ID: $senderId');
+    print('Receiver ID: $receiverId');
+    print('Message Text: $text');
+
+    final response = await http.post(
+      Uri.parse('${GlobalData().baseUrl}/api/messages'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${GlobalData().token}', // Replace with your actual token
+      },
+      body: json.encode({
+        'senderId': senderId,
+        'receiverId': receiverId,
+        'messageText': text,
+      }),
+    );
+
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 201) {
+      // Message sent successfully, fetch messages again to update the UI
+      _fetchMessages();
+    } else {
+      throw Exception('Failed to send message');
+    }
+  } catch (error) {
+    print('Error sending message: $error');
+  }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Color(0xFFDCBAFF),
-        title: Row(
-          children: [
-            _buildProfilePicture(),
-            SizedBox(width: 8.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${widget.contact}',
-                  style: TextStyle(
-                    color: Color(0xFF30417C),
-                  ),
-                ),
-                Text(
-                  'Online',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12.0,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.call),
-            onPressed: () => _makeCall(widget.contact),
-          ),
-          IconButton(
-            icon: Icon(Icons.videocam),
-            onPressed: () {
-              // Handle video call button press
-            },
-          ),
-        ],
+        title: Text('${widget.firstName} ${widget.lastName}'),
       ),
       body: Column(
         children: [
           Expanded(
-            child: Container(
-              padding: EdgeInsets.all(8.0),
-              child: ListView.builder(
-                itemCount: _contactMessages[widget.contact]?.length ?? 0,
-                itemBuilder: (context, index) {
-                  final message = _contactMessages[widget.contact]![index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProfilePicture(),
-                        SizedBox(width: 8.0),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                message.sender,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(message.text),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '${message.timestamp.hour}:${message.timestamp.minute}',
-                        ),
-                      ],
+            child: ListView.builder(
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                return ListTile(
+                  title: Text(message.text),
+                  subtitle: Text('${message.timestamp}'),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
                     ),
-                  );
-                },
-              ),
-            ),
-          ),
-          _buildMessageBox(),
-        ],
-      ),
-      bottomNavigationBar: _buildNavBar(),
-    );
-  }
-
-  Widget _buildProfilePicture() {
-    return CircleAvatar(
-      radius: 20.0,
-      backgroundImage: AssetImage('assets/images/passport.png'),
-    );
-  }
-
- Widget _buildMessageBox() {
-  return Container(
-    color: Colors.transparent,
-    padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0), // Adjusted vertical padding
-    child: Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            child: TextField(
-              controller: _textController,
-              decoration: InputDecoration(
-                hintText: '\t\tType a message...',
-                contentPadding: EdgeInsets.symmetric(vertical: 12.0), // Adjusted vertical content padding
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30.0),
+                  ),
                 ),
-              ),
-              onSubmitted: _handleMessageSubmit,
-            ),
-          ),
-        ),
-        SizedBox(width: 8.0),
-        IconButton(
-          icon: Icon(Icons.send),
-          onPressed: () => _handleMessageSubmit(_textController.text),
-        ),
-      ],
-    ),
-  );
-}
+IconButton(
+  icon: Icon(Icons.send),
+  onPressed: () {
+    _sendMessage(_textController.text);
+    _textController.clear(); // Clear the text field
+    FocusScope.of(context).unfocus(); // Dismiss the keyboard
+  },
+),
 
-  Widget _buildNavBar() {
-    return Container(
-      color: Color(0xFFDCBAFF),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          IconButton(
-            icon: Icon(Icons.home),
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
-                (route) => false,
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.message,
-              color: Color(0xFF912bFF),
+              ],
             ),
-            onPressed: () {
-              // Handle messaging button press
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.article),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NewsPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.question_answer),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => QnABoard()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsPage()),
-              );
-            },
           ),
         ],
-      ),
-    );
-  }
-
-  void _handleMessageSubmit(String text) {
-  if (text.isNotEmpty) {
-    setState(() {
-      _contactMessages[widget.contact]?.add(
-        Message('you', text, DateTime.now()), // Set the sender as "you" for your messages
-      );
-      _textController.clear();
-    });
-  }
-}
-
-  void _makeCall(String contact) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CallScreen(contact: contact),
       ),
     );
   }

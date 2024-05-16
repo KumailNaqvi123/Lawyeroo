@@ -1,50 +1,107 @@
+import 'dart:convert';
+//import 'dart:io';
+import 'dart:async';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:project/Screens/news_details_page.dart';
+import 'package:project/Screens/Global.dart';
+import 'package:url_launcher/url_launcher.dart';
+// import 'package:project/Screens/news_details_page.dart';
+
+
+const Color appBarColor = Color(0xFFDCBAFF);
 
 class LNewsPage extends StatelessWidget {
+  final String userId;
+
+  LNewsPage({required this.userId});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('NEWS'),
-        centerTitle: true, // Center align the title
-        backgroundColor: Color(0xFFDCBAFF), // Set the background color of AppBar
+        centerTitle: true,
+        backgroundColor: appBarColor,
       ),
-      body: LNewsList(),
+      body: LNewsList(userId: userId),
     );
   }
 }
 
-class LNewsList extends StatelessWidget {
+class LNewsList extends StatefulWidget {
+  final String userId;
+
+  LNewsList({required this.userId});
+
+  @override
+  _LNewsListState createState() => _LNewsListState();
+}
+
+class _LNewsListState extends State<LNewsList> {
+  Future<List<LNewsItem>> _fetchNews() async {
+  print("Fetching news for lawyerId: ${widget.userId}");
+
+  int maxRetries = 2;
+  int retryCount = 0;
+  List<LNewsItem> newsItems = [];
+
+  while (retryCount < maxRetries) {
+    try {
+      final response = await http.post(
+        Uri.parse('https://36fd-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommend_news'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': GlobalData().userData['id']}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        newsItems = List<LNewsItem>.from(
+            data['articles'].map((item) => LNewsItem.fromJson(item)));
+        break;
+      } else {
+        print('Failed to load news with status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to load news with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      retryCount += 1;
+      print('Error fetching news: $e. Retrying $retryCount/$maxRetries');
+      await Future.delayed(Duration(seconds: 120)); // Consider changing the delay as needed
+      if (retryCount >= maxRetries) {
+        print('Max retries reached. Throwing exception.');
+        throw Exception('Error fetching news: $e');
+      }
+    }
+  }
+
+  return newsItems;
+}
+
+
+
   @override
   Widget build(BuildContext context) {
-    // Replace this with your actual news data or fetch from an API
-    List<LNewsItem> news = [
-      LNewsItem(
-        title: 'News 1: This is the first news article.',
-        imageAsset: 'assets/images/News_Thumbnail.png', // Replace with actual asset path
-        fullArticleUrl: 'https://example.com/full_article1', // Replace with actual URL
-      ),
-      LNewsItem(
-        title: 'News 2: Another interesting news piece.',
-        imageAsset: 'assets/images/News_Thumbnail.png', // Replace with actual asset path
-        fullArticleUrl: 'https://example.com/full_article2', // Replace with actual URL
-      ),
-      LNewsItem(
-        title: 'News 3: Stay tuned for more updates.',
-        imageAsset: 'assets/images/News_Thumbnail.png', // Replace with actual asset path
-        fullArticleUrl: 'https://example.com/full_article3', // Replace with actual URL
-      ),
-    ];
-
-    return ListView.builder(
-      itemCount: news.length,
-      itemBuilder: (context, index) {
-        return LNewsCard(
-          title: news[index].title,
-          imageAsset: news[index].imageAsset,
-          fullArticleUrl: news[index].fullArticleUrl,
-        );
+    return FutureBuilder<List<LNewsItem>>(
+      future: _fetchNews(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          print('Error fetching news: ${snapshot.error}');
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              final newsItem = snapshot.data![index];
+              return LNewsCard(
+                newsItem: newsItem,
+              );
+            },
+          );
+        } else {
+          return Center(child: Text('No news articles found.'));
+        }
       },
     );
   }
@@ -52,25 +109,42 @@ class LNewsList extends StatelessWidget {
 
 class LNewsItem {
   final String title;
-  final String imageAsset;
-  final String fullArticleUrl;
+  final String? urlToImage;
+  final String url;
+  final String description;
+  final String author;
+  final String source;
+  final String content;
 
   LNewsItem({
     required this.title,
-    required this.imageAsset,
-    required this.fullArticleUrl,
+    this.urlToImage,
+    required this.url,
+    required this.description,
+    required this.author,
+    required this.source,
+    required this.content,
   });
+
+  factory LNewsItem.fromJson(Map<String, dynamic> json) {
+    return LNewsItem(
+      title: json['title'] ?? "",
+      urlToImage: json['urlToImage'],
+      url: json['url'] ?? "",
+      description: json['description'] ?? "",
+      author: json['author'] ?? "",
+      source: json['source']?['name'] ?? "",
+      content: json['content'] ?? "",
+    );
+  }
 }
 
+
 class LNewsCard extends StatelessWidget {
-  final String title;
-  final String imageAsset;
-  final String fullArticleUrl;
+  final LNewsItem newsItem;
 
   LNewsCard({
-    required this.title,
-    required this.imageAsset,
-    required this.fullArticleUrl,
+    required this.newsItem,
   });
 
   @override
@@ -83,8 +157,7 @@ class LNewsCard extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => NewsDetailsPage(
-                title: title,
-                imageAsset: imageAsset,
+                newsItem: newsItem,
               ),
             ),
           );
@@ -92,16 +165,24 @@ class LNewsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.asset(
-              imageAsset,
-              height: 200, // Adjust the height as needed
-              fit: BoxFit.cover,
+            if (newsItem.urlToImage != null)
+              Image.network(
+                newsItem.urlToImage!,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
             Padding(
               padding: EdgeInsets.all(8.0),
               child: Text(
-                title,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                newsItem.description,
+                style: TextStyle(fontSize: 14),
               ),
             ),
           ],
@@ -110,3 +191,96 @@ class LNewsCard extends StatelessWidget {
     );
   }
 }
+
+
+
+
+class NewsDetailsPage extends StatelessWidget {
+  final LNewsItem newsItem;
+
+  NewsDetailsPage({
+    required this.newsItem,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('News Details'),
+        centerTitle: true,
+        backgroundColor: appBarColor,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (newsItem.urlToImage != null)
+              Image.network(
+                newsItem.urlToImage!,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.title,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Author: ${newsItem.author}',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Source: ${newsItem.source}',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                newsItem.content,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: InkWell(
+                  onTap: () => launchURL(newsItem.url),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Read more',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $urlString';
+    }
+  }
+}
+

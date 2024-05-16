@@ -1,6 +1,22 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
+import 'package:project/Screens/Global.dart';
 
 class WriteReviewScreen extends StatefulWidget {
+  final String clientId;
+  final String lawyerId;
+  final String token;
+  final Function onReviewSubmitted; // Add this callback function
+
+  WriteReviewScreen({
+    required this.clientId,
+    required this.lawyerId,
+    required this.token,
+    required this.onReviewSubmitted, // Pass the callback function
+  });
+
   @override
   _WriteReviewScreenState createState() => _WriteReviewScreenState();
 }
@@ -42,19 +58,58 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
             SizedBox(height: 16.0),
             // Submit button
             ElevatedButton(
-              onPressed: () {
-                // Save the review and navigate back
-                Navigator.pop(context, {
-                  'rating': rating,
-                  'review': reviewController.text,
-                });
-              },
+              onPressed: _submitReview,
               child: Text('Submit Review'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _submitReview() async {
+    String reviewText = reviewController.text;
+
+    if (reviewText.isEmpty || rating == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please provide a rating and a review.')),
+      );
+      return;
+    }
+
+    var url = Uri.parse('${GlobalData().baseUrl}/api/lawyers/ratings/');
+
+    try {
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode({
+          'client_id': widget.clientId,
+          'lawyer_id': widget.lawyerId,
+          'ratings': rating,
+          'comment_text': reviewText,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Review submitted successfully!')),
+        );
+        widget.onReviewSubmitted(); // Call the callback function
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit review.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting review.')),
+      );
+    }
   }
 }
 

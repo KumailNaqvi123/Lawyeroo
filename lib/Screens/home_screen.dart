@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:project/Screens/Global.dart';
 import 'package:project/Screens/HomescreenLawyerDetailsPage.dart';
+// import 'package:project/Screens/HomescreenLawyerDetailsPage2.dart';
 import 'package:project/Screens/HomescreenNewsDetailsPage.dart';
 import 'package:project/Screens/HomescreenReccLawyers.dart';
 import 'package:project/Screens/News.dart';
@@ -8,27 +12,158 @@ import 'package:project/Screens/Settings.dart';
 import 'package:project/Screens/contact_screen.dart';
 import 'package:project/Screens/notifications.dart';
 import 'package:project/Screens/qna_board.dart';
+import 'package:project/Screens/newsdefinition.dart';
 
-void main() {
-  runApp(MyApp());
-}
 
 class MyApp extends StatelessWidget {
+  final String token;
+  final Map<String, dynamic> userData; // Add this line
+
+  MyApp({required this.token, required this.userData}); // Modify constructor to accept userData
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomeScreen(),
+      home: HomeScreen(token: token, userData: userData), // Pass userData to HomeScreen
     );
   }
 }
 
+
 class HomeScreen extends StatefulWidget {
+  final String token;
+  final Map<String, dynamic> userData; // Add userData as a parameter
+
+  HomeScreen({required this.token, required this.userData}); // Update constructor to receive userData
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.8);
+  List<dynamic> lawyersData = [];
+  List<ClientNewsItem> clientNewsItems = [];
+  List<dynamic> lawyersData2 = [];
+
+  @override
+  void initState() {
+  super.initState();
+  
+_fetchClientNews().then((items) {
+  setState(() {
+    clientNewsItems = items.take(5).toList(); // Take only the first five items
+     print('News items set in state: $clientNewsItems');  
+  });
+}).catchError((error) {
+  print('Error fetching news: $error');
+});
+
+      super.initState();
+    _fetchLawyersData();
+    _fetchNearbyLawyersData();
+    print("Current Page: Home Screen");
+    print("Token: ${widget.token}"); // Print the token
+    print("User Data: ${widget.userData}"); // Print all user data
+    print("Passed Lawyer Data: $lawyersData");
+    print ("PASSED LAWYERS DATA: $lawyersData2");
+}
+
+Future<List<ClientNewsItem>> _fetchClientNews() async {
+  print(" clients id ${widget.userData['id']}");
+  final response = await http.post(
+    Uri.parse('https://36fd-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommend_news'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'user_id': widget.userData['id']}),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    List<ClientNewsItem> newsItems = (data['articles'] as List).map((item) => ClientNewsItem.fromJson(item)).toList();
+    return newsItems;
+  } else {
+    throw Exception('Failed to load news: ${response.statusCode}');
+  }
+}
+
+
+
+Future<void> _fetchLawyersData() async {
+  try {
+    final response = await http.get(
+      Uri.parse('https://2437-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommendations?client_id=${GlobalData().userData['id']}'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
+    );
+
+    if (response.statusCode == 200) {
+      var json = jsonDecode(response.body);
+      List<dynamic> recommendedLawyers = json['recommended_lawyers'] ?? [];
+      List<Map<String, dynamic>> lawyers = recommendedLawyers.map<Map<String, dynamic>>((data) {
+        return {
+          'account_type': data['account_type'] ?? 'Lawyer',
+          'address': data['address'] ?? 'No address provided',
+          'email': data['email'] ?? 'No email provided',
+          'fees': data['fees'] is double ? data['fees'] : 0.0,
+          'first_name': data['first_name'] ?? 'Unknown',
+          'last_name': data['last_name'] ?? 'Unknown',
+          'lawyer_id': data['lawyer_id'] ?? 'No ID',
+          'ph_number': data['ph_number'] ?? 'No phone number',
+          'profile_picture': data['profile_picture'] ?? 'default_image_url',
+          'rating': data['rating'] is double ? data['rating'] : 0.0,
+          'rating_count': data['rating_count'] is int ? data['rating_count'] : 0,
+          'specializations': data['specializations'] ?? ['No specialization'],
+          'universities': data['universities'] ?? 'Unknown',
+          'verified': data['verified'] ?? false,
+          'years_of_experience': data['years_of_experience'],
+          'conversations': data['conversations'] ?? {'-Nvs0D2WqXpuqNOCnLEC_-NwBB-yOIGQlqLonV6Cx': true},
+        };
+      }).toList();
+
+      setState(() {
+        lawyersData = lawyers;
+      });
+      print('RECOMMENDED LAWYER DATA: $lawyersData');
+    } else {
+      print('Failed to load recommended lawyer data: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error fetching recommended lawyer data: $e');
+  }
+}
+
+  
+Future<void> _fetchNearbyLawyersData() async {
+  // Prepare the URI and headers
+  var uri = Uri.parse('${GlobalData().baseUrl}/api/lawyers/nearby-lawyers');
+  var headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${widget.token}',  // Ensure the token is taken from widget.token or a similar source
+  };
+
+  // Prepare the body of the request
+  var body = jsonEncode({
+    "address": widget.userData['address'] ?? "Default Address"
+  });
+
+  try {
+    final response = await http.post(uri, headers: headers, body: body);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData2 = jsonDecode(response.body);
+      print('Fetched Data2: $responseData2');
+      setState(() {
+        lawyersData2 = responseData2; // Assuming this variable is used to store the lawyers data
+      });
+      print('Nearby lawyers data fetched successfully.');
+    } else {
+      print('Failed to load nearby lawyers data: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error fetching nearby lawyers data: $e');
+  }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +183,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               'Home',
               style: TextStyle(
-                fontSize: 20,
+                fontFamily: 'Poppins',
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
+                color: Color(0xff30417c),
               ),
             ),
           ],
@@ -79,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SearchPage(),
+                      builder: (context) => SearchPage(token: widget.token, userData: widget.userData),
                     ),
                   );
                 },
@@ -115,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => NewsPage()),
+                        MaterialPageRoute(builder: (context) => NewsPage(userId: widget.userData['id'].toString())),
                       );
                     },
                     child: Padding(
@@ -135,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 300,
                 child: PageView.builder(
                   controller: _pageController,
-                  itemCount: 3,
+                  itemCount: clientNewsItems.length, // This is now up to five
                   onPageChanged: (int index) {
                     setState(() {});
                   },
@@ -153,8 +290,11 @@ class _HomeScreenState extends State<HomeScreen> {
                        Navigator.push(
                         context,
                         MaterialPageRoute(
-                       builder: (context) => HomescreenReccLawyers(),
-                       ),
+                          builder: (context) => HomescreenReccLawyers(
+                            token: widget.token,
+                            userData: widget.userData,
+                          ),
+                        ),
                       );
                     },
                     child: Padding(
@@ -194,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildNavBar(),
+      bottomNavigationBar: _buildNavBar(),   
     );
   }
 
@@ -212,39 +352,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
- Widget _buildRecentNewsItem(BuildContext context, int index) {
-  List<String> headlines = [
-    'Breaking News: Major Legal Victory',
-    'Exclusive Interview with Renowned Lawyer',
-    'Landmark Decision in High-Profile Case',
-  ];
+Widget _buildRecentNewsItem(BuildContext context, int index) {
+  if (index >= clientNewsItems.length) return Container(); // Ensure index is within range
 
-  List<String> contexts = [
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et.',
-    'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
-  ];
-
-  List<String> images = [
-    'assets/images/Banner1.jpg',
-    'assets/images/Banner1.jpg',
-    'assets/images/Banner1.jpg',
-  ];
-
-  String headline = headlines[index % headlines.length];
-  String contextText = contexts[index % contexts.length];
-  String image = images[index % images.length];
-
+  ClientNewsItem newsItem = clientNewsItems[index];
   return GestureDetector(
     onTap: () {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => HomescreenNewsDetailsPage( // Replace NewsDetailsPage with your actual news details page
-            headline: headline,
-            contextText: contextText,
-            image: image,
-          ),
+          builder: (context) => HomescreenNewsDetailsPage(newsItem: newsItem),
         ),
       );
     },
@@ -258,37 +375,34 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.asset(
-                image,
-                width: double.infinity,
-                height: 140,
-                fit: BoxFit.cover,
+            if (newsItem.urlToImage != null)
+              ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                child: Image.network(
+                  newsItem.urlToImage!,
+                  width: double.infinity,
+                  height: 140,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                newsItem.title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      headline,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      contextText,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                newsItem.description ?? 'No description available', // Use description with a null check
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14),
               ),
             ),
           ],
@@ -297,52 +411,63 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   );
 }
+void printJsonWithTypes(Map<String, dynamic> jsonObject) {
+  jsonObject.forEach((key, value) {
+    print('$key: $value (${value.runtimeType})');
+  });
+}
+
 Widget _buildProfileItem(BuildContext context, int index) {
+  if (lawyersData.isEmpty || index >= lawyersData.length) return Container();
+
+  var lawyer = lawyersData[index];
   return GestureDetector(
     onTap: () {
+      print("Recommended Lawyer data $lawyer");
+      printJsonWithTypes(lawyer);
+      // Passing the specific lawyer data from recommended lawyers when this profile is tapped
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomescreenLawyerDetailsScreen(
-            lawyerData: {
-              'name': 'Profile Name $index',
-              // Add more parameters if needed for lawyer details
-              'specification': 'Lawyer Specification', // Example specification
-              'rating': 4.5, // Example rating
-              // Add more data as needed
-            },
-          ),
-        ),
+        MaterialPageRoute(builder: (context) => HomescreenLawyerDetailsScreen(
+          lawyerData: lawyer, 
+          token: widget.token, 
+          userData: widget.userData
+        )),
       );
     },
     child: Card(
       margin: EdgeInsets.all(8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         width: 180,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Profile picture and other details
             Container(
-              height: 100,
+              height: 120,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 image: DecorationImage(
-                  image: AssetImage('assets/images/profile.jpg'),
+                  image: NetworkImage(lawyer['profile_picture'] ?? 'assets/images/default_lawyer.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               child: Text(
-                'Profile Name $index',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                "${lawyer['first_name']} ${lawyer['last_name']}",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                "Fee: \$${lawyer['fees']}",
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -351,54 +476,46 @@ Widget _buildProfileItem(BuildContext context, int index) {
     ),
   );
 }
+Widget _buildVerticalListItem(int index) {
+  if (lawyersData2.isEmpty || index >= lawyersData2.length) return Container(); // Ensure we are checking `lawyersData2`
 
-  Widget _buildVerticalListItem(int index) {
-    return Container(
-      margin: EdgeInsets.all(8),
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white,
+  var lawyer = lawyersData2[index] as Map<String, dynamic>; // Ensure `lawyer` is of type Map<String, dynamic>
+  // Create a new Map that includes the lawyer_id
+   lawyer = {
+    ...lawyer,
+    'lawyer_id': lawyer['id'], // Add the lawyer_id
+  };
+  print("Nearby lawyeer details $lawyer");
+        printJsonWithTypes(lawyer);
+
+  return Card(
+    margin: EdgeInsets.all(8),
+    color: Colors.white.withOpacity(0.9),  // Translucent background
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    child: ListTile(
+      leading: CircleAvatar(
+        backgroundImage: NetworkImage(lawyer['profile_picture'] ?? 'assets/images/default_lawyer.jpg'),
       ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/images/profile.jpg',
-            width: 80,
-            height: 80,
-            fit: BoxFit.cover,
-          ),
-          SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Name $index',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Date',
-                style: TextStyle(
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          Spacer(),
-          Text(
-            '\$100.00',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      title: Text("${lawyer['first_name']} ${lawyer['last_name']}"),
+      subtitle: Text("Specializations: ${lawyer['specializations']}"),
+      trailing: Text("\$${lawyer['fees']}"),
+    onTap: () {
+      print("Recommended Lawyer data $lawyer");
+      // Passing the specific lawyer data from recommended lawyers when this profile is tapped
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => HomescreenLawyerDetailsScreen(
+          lawyerData: lawyer, 
+          token: widget.token, 
+          userData: widget.userData
+        )),
+      );
+    },    ),
+  );
+}
+
+
+
 
   Widget _buildNavBar() {
     return Container(
@@ -410,10 +527,13 @@ Widget _buildProfileItem(BuildContext context, int index) {
             icon: Icon(Icons.home, color: Color(0xFF912bFF)),
             onPressed: () {
               Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
-                (route) => false,
-              );
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(token: widget.token, userData: widget.userData),
+              ),
+              (route) => false,
+            );
+
             },
           ),
           IconButton(
@@ -422,7 +542,7 @@ Widget _buildProfileItem(BuildContext context, int index) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ContactsScreen(context: context),
+builder: (context) => ContactsScreen(),
                 ),
               );
             },
@@ -432,7 +552,7 @@ Widget _buildProfileItem(BuildContext context, int index) {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NewsPage()),
+                MaterialPageRoute(builder: (context) => NewsPage(userId: widget.userData['id'].toString(),)),
               );
             },
           ),
@@ -441,19 +561,19 @@ Widget _buildProfileItem(BuildContext context, int index) {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => QnABoard()),
+                MaterialPageRoute(builder: (context) => QnABoard(token: widget.token, userData: widget.userData)),
               );
             },
           ),
           IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsPage()),
-              );
-            },
-          ),
+          icon: Icon(Icons.settings),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsPage(token: widget.token, userData:widget.userData, lawyerData: lawyersData)),
+            );
+          },
+        ),
         ],
       ),
     );

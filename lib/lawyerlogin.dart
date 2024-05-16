@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';  //For handling JSON encoding
+import 'package:project/Screens/Global.dart';
+import 'package:project/Screens/lawyerhomepage.dart';
+import 'dart:convert';  // For handling JSON encoding
 import 'package:project/Screens/my_button.dart';
 import 'package:project/Screens/my_textfield.dart';
 
@@ -12,46 +14,55 @@ class LawyerLoginPage extends StatefulWidget {
 }
 
 class _LawyerLoginPageState extends State<LawyerLoginPage> {
-  final EmailController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool rememberMe = false;
 
-  void signLawyerIn() async {
-  String Email = EmailController.text;
-  String password = passwordController.text;
+ void signLawyerIn() async {
+  String email = emailController.text.trim();
+  String password = passwordController.text.trim();
 
   try {
     http.Response response = await http.post(
-      Uri.parse('http://192.168.10.2:3000/api/lawyers'),
+      Uri.parse('${GlobalData().baseUrl}/api/login'),  // Use base URL from GlobalData
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'Email': Email,
+        'email': email,
         'password': password,
       }),
     );
 
     if (response.statusCode == 200) {
-      // Assuming the response body is the token or a success message
-      var data = jsonDecode(response.body);
-      print('Login successful: $data');
-      // Navigate to home or another appropriate screen
-      Navigator.pushReplacementNamed(context, '/home');
+      var responseData = jsonDecode(response.body);
+      var token = responseData['token'];
+      var userData = responseData['userData'];
+      var id = userData['id'];
+      var first_name = userData['first_name'];
+      var last_name = userData['last_name']; // Extracting unique id from response
+      print('Token: $token'); 
+      print('ID: $id');
+      print('First name: $first_name'); // Logging for debugging purposes
+      print('Last name: $last_name');
+      GlobalData().setUserData(id, token, userData);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LawyerHomepage(token: token, userData: userData),
+        ),
+      );
     } else {
-      // Error handling
-      print('Failed to log in: ${response.body}');
+      print('Failed to log in with status code: ${response.statusCode}. Response body: ${response.body}');
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Login Failed'),
-            content: Text('Invalid Email or password.'),
-            actions: [
+            content: Text('Invalid email or password.'),
+            actions: <TextButton>[
               TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                onPressed: () => Navigator.of(context).pop(),
                 child: Text('OK'),
               ),
             ],
@@ -61,10 +72,46 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
     }
   } catch (e) {
     print('Error occurred: $e');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Network Error'),
+          content: Text('An error occurred. Please try again later.'),
+          actions: <TextButton>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
-  void navigateToSignupPage() {
+
+void _showDialog(String title, String content) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void navigateToSignupPage() {
     Navigator.pushReplacementNamed(context, '/lawyersignup');
   }
 
@@ -111,7 +158,7 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 30.0),
                       child: MyTextField(
-                        controller: EmailController,
+                        controller: emailController,
                         hintText: 'E-mail',
                         obscureText: false,
                         borderRadius: 30.0,
@@ -189,6 +236,7 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
                     SizedBox(height: screenHeight * 0.025),
                     MyButton(
                       onTap: signLawyerIn,
+                      buttonText: 'Sign In',  // Ensuring button text is clearly defined
                     ),
                     SizedBox(height: screenHeight * 0.05),
                     Padding(
