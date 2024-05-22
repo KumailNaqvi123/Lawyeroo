@@ -91,7 +91,7 @@ Future<List<ClientNewsItem>> _fetchClientNews() async {
 Future<void> _fetchLawyersData() async {
   try {
     final response = await http.get(
-      Uri.parse('https://2437-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommendations?client_id=${GlobalData().userData['id']}'),
+      Uri.parse('http://3.144.71.210:8000/recommendations?client_id=${GlobalData().userData['id']}'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 
