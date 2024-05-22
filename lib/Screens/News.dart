@@ -1,4 +1,4 @@
-//for newslink https://700f-2400-adca-116-bd00-bc82-d795-4c13-fcda.ngrok-free.app/recommend_news
+
 
 import 'dart:convert';
 //import 'dart:io';
@@ -52,7 +52,7 @@ class _NewsListState extends State<NewsList> {
   while (retryCount < maxRetries) {
     try {
       final response = await http.post(
-        Uri.parse('https://36fd-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommend_news'),
+        Uri.parse('https://6cb0-154-81-228-94.ngrok-free.app/recommend_news'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': widget.userId}),
       );

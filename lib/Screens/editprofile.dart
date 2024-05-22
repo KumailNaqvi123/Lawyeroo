@@ -47,11 +47,22 @@ class _EditClientProfilePageState extends State<EditClientProfilePage> {
   final ImagePicker _picker = ImagePicker();
 
   Map<String, bool> lawyerSpecializations = {
-  'Family Law': false,
-  'Criminal Law': false,
-  'Business Law': false,
-  'Employment Law': false,
-  'Tax Law': false,
+    "Personal Injury Lawyer": false,
+    "Estate Planning Lawyer": false,
+    "Bankruptcy Lawyer": false,
+    "Intellectual Property Lawyer": false,
+    "Employment Lawyer": false,
+    "Corporate Lawyer": false,
+    "Immigration Lawyer": false,
+    "Criminal Lawyer": false,
+    "Medical Malpractice Lawyer": false,
+    "Tax Lawyer": false,
+    "Family Lawyer": false,
+    "Worker's Compensation Lawyer": false,
+    "Contract Lawyer": false,
+    "Social Security Disability Lawyer": false,
+    "Civil Litigation Lawyer": false,
+    "General Practice Lawyer": false
 };
 
 void _showSpecializationsDialog() {

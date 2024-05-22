@@ -35,7 +35,7 @@ class _LawyerProfilePageState extends State<LawyerProfilePage> {
                     phoneNumber: GlobalData().userData['ph_number'] ?? '',
                     address: GlobalData().userData['address'] ?? '',
                     profilePicture: GlobalData().userData['profile_picture'] ?? '',
-                    specializations:  GlobalData().userData["specializations"],
+                    specializations:  GlobalData().userData['specializations'],
                     userData: GlobalData().userData,
                     token: widget.token,
                     onUpdateComplete: (newData) => setState(() {

@@ -38,20 +38,26 @@ class _LawyerAppointmentsPageState extends State<LawyerAppointmentsPage> {
         'Authorization': 'Bearer ${widget.token}', // Use the token here
       },
     );
+
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body)['data'];
+      List<LawyerAppointment> allAppointments = data
+          .map((json) => LawyerAppointment.fromJson(json))
+          .toList();
+
+      // Categorize appointments
       setState(() {
-        inProgressAppointments = data
-            .where((appointment) => appointment['appointment_status'] == 'accepted')
-            .map((json) => LawyerAppointment.fromJson(json))
+        inProgressAppointments = allAppointments
+            .where((appointment) => 
+                appointment.appointmentStatus == 'accepted' && !isAppointmentPast(appointment))
             .toList();
-        pendingAppointments = data
-            .where((appointment) => appointment['appointment_status'] == 'pending')
-            .map((json) => LawyerAppointment.fromJson(json))
+        pendingAppointments = allAppointments
+            .where((appointment) => 
+                appointment.appointmentStatus == 'pending' && !isAppointmentPast(appointment))
             .toList();
-        pastAppointments = data
-            .where((appointment) => appointment['appointment_status'] == 'past')
-            .map((json) => LawyerAppointment.fromJson(json))
+        pastAppointments = allAppointments
+            .where((appointment) => 
+                appointment.appointmentStatus == 'past' || isAppointmentPast(appointment))
             .toList();
         isLoading = false;
       });
@@ -60,6 +66,10 @@ class _LawyerAppointmentsPageState extends State<LawyerAppointmentsPage> {
         isLoading = false;
       });
     }
+  }
+
+  bool isAppointmentPast(LawyerAppointment appointment) {
+    return appointment.appointmentDate.isBefore(DateTime.now());
   }
 
   Future<void> deleteAppointment(String appointmentId) async {

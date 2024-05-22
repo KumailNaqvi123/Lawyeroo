@@ -140,7 +140,7 @@ builder: (context) => ContactsScreen(),
             },
           ),
           IconButton(
-            icon: Icon(Icons.notifications, color: Colors.black),
+            icon: Icon(Icons.notifications),
             onPressed: () {
               Navigator.push(
                 context,

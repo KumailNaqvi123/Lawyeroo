@@ -18,64 +18,71 @@ class _SearchPageState extends State<SearchPage> {
   List<Map<String, dynamic>> lawyerProfiles = [];
   TextEditingController searchController = TextEditingController();
 
-  Future<void> fetchLawyersData({String keyword = ''}) async {
-    var queryParams = {
-      'keyword': keyword,
-    };
+Future<void> fetchLawyersData({String keyword = ''}) async {
+  var queryParams = {
+    'keyword': keyword,
+  };
 
-    try {
-      // Construct URI components
-      var baseUrl = GlobalData().baseUrl;
-      var host = Uri.parse(baseUrl).host;
-      var path = '/api/lawyers';
+  try {
+    // Construct URI components
+    var baseUrl = GlobalData().baseUrl;
+    var uri = Uri.parse('$baseUrl/api/lawyers').replace(queryParameters: queryParams);
     
-      // Construct the URI
-      Uri uri = Uri(
-        scheme: 'http',
-        host: host,
-        port: 3000, // Assuming your server is running on port 3000
-        path: path,
-        queryParameters: queryParams,
-      );
+    print("Request URI: $uri");
+    print("Authorization Token: Bearer ${GlobalData().token}");
 
-      final response = await http.get(
-        uri,
-        headers: {'Authorization': 'Bearer ${widget.token}'},
-      );
+    final request = http.Request('GET', uri);
+    request.headers.addAll({'Authorization': 'Bearer ${GlobalData().token}'});
 
-      if (response.statusCode == 200) {
-        final List<dynamic> responseData = jsonDecode(response.body);
-        setState(() {
-          lawyerProfiles = responseData.map<Map<String, dynamic>>((lawyer) {
-            // Ensure specializations is stored as a List<dynamic>
-            List<dynamic> specializations = [];
-            if (lawyer['specializations'] != null && lawyer['specializations'] is List) {
-              specializations = List<dynamic>.from(lawyer['specializations']);
-            }
-            Map<String, dynamic> mappedLawyer = {
-              ...lawyer,
-              'lawyer_id': lawyer['id'],
-              'name': '${lawyer['first_name']} ${lawyer['last_name']}',
-              'specializations': specializations, // Store specializations as a List<dynamic>
-              'rating': double.tryParse(lawyer['rating'].toString()) ?? 0.0,
-              'image': lawyer['profile_picture'] ?? 'default_image_path',
-            };
+    // Print request details
+    print("Request method: ${request.method}");
+    print("Request URI: ${request.url}");
+    print("Request headers: ${request.headers}");
+    print("Request body: ${request.body}");
 
-            // Print lawyer with details and types
-            mappedLawyer.forEach((key, value) {
-              print('$key: $value (${value.runtimeType})');
-            });
+    final streamedResponse = await request.send();
 
-            return mappedLawyer;
-          }).toList();
-        });
-      } else {
-        print('Failed to load data: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching data: $e');
+    // Convert streamed response to response
+    final response = await http.Response.fromStream(streamedResponse);
+
+    // Print response details
+    print("Response status code: ${response.statusCode}");
+    print("Response headers: ${response.headers}");
+    print("Response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = jsonDecode(response.body);
+      setState(() {
+        lawyerProfiles = responseData.map<Map<String, dynamic>>((lawyer) {
+          // Ensure specializations is stored as a List<dynamic>
+          List<dynamic> specializations = [];
+          if (lawyer['specializations'] != null && lawyer['specializations'] is List) {
+            specializations = List<dynamic>.from(lawyer['specializations']);
+          }
+          Map<String, dynamic> mappedLawyer = {
+            ...lawyer,
+            'lawyer_id': lawyer['id'],
+            'name': '${lawyer['first_name']} ${lawyer['last_name']}',
+            'specializations': specializations, // Store specializations as a List<dynamic>
+            'rating': double.tryParse(lawyer['rating'].toString()) ?? 0.0,
+            'image': lawyer['profile_picture'] ?? 'default_image_path',
+          };
+
+          // Print lawyer with details and types
+          mappedLawyer.forEach((key, value) {
+            print('$key: $value (${value.runtimeType})');
+          });
+
+          return mappedLawyer;
+        }).toList();
+      });
+    } else {
+      print('Failed to load data: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Error fetching data: $e');
   }
+}
 
   @override
   Widget build(BuildContext context) {

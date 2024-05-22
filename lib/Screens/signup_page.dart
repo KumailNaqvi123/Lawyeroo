@@ -26,10 +26,22 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController addressController = TextEditingController();
 
    List<String> preferences = [
-    'Criminal Law',
-    'Family Law',
-    'Corporate Law',
-    'Intellectual Property Law',
+    "Personal Injury Lawyer",
+    "Estate Planning Lawyer",
+    "Bankruptcy Lawyer",
+    "Intellectual Property Lawyer",
+    "Employment Lawyer",
+    "Corporate Lawyer",
+    "Immigration Lawyer",
+    "Criminal Lawyer",
+    "Medical Malpractice Lawyer",
+    "Tax Lawyer",
+    "Family Lawyer",
+    "Worker's Compensation Lawyer",
+    "Contract Lawyer",
+    "Social Security Disability Lawyer",
+    "Civil Litigation Lawyer",
+    "General Practice Lawyer"
   ];
   List<String> selectedPreferences = [];
 

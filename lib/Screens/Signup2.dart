@@ -26,14 +26,22 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController addressController = TextEditingController();
 
   List<String> preferences = [
-    'Personal Injury Law',
-    'Estate Planning Law',
-    'Bankruptcy Law',
-    'Intellectual Property Law',
-    'Employment Law',
-    'Corporate Law',
-    'Immigration Law',
-    'Criminal Law',
+    "Personal Injury Law",
+    "Estate Planning Law",
+    "Bankruptcy Law",
+    "Intellectual Property Law",
+    "Employment Law",
+    "Corporate Law",
+    "Immigration Law",
+    "Criminal Law",
+    "Medical Malpractice Law",
+    "Tax Law",
+    "Family Law",
+    "Worker's Compensation Law",
+    "Contract Law",
+    "Social Security Disability Law",
+    "Civil Litigation Law",
+    "General Practice Law"
   ];
   List<String> selectedPreferences = [];
 
@@ -165,106 +173,106 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+Widget build(BuildContext context) {
+  final screenHeight = MediaQuery.of(context).size.height;
+  final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      backgroundColor: Color(0Xff9f98c9),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              top: -screenHeight * 0.05,
-              child: Image.asset(
-                'assets/images/ellipse1.png',
-                width: screenWidth * 0.30,
-                height: screenWidth * 0.30,
-              ),
+  return Scaffold(
+    backgroundColor: Color(0Xff9f98c9),
+    body: SafeArea(
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: -screenHeight * 0.05,
+            child: Image.asset(
+              'assets/images/ellipse1.png',
+              width: screenWidth * 0.30,
+              height: screenWidth * 0.30,
             ),
-            Positioned(
-              left: screenWidth * -0.07,
-              top: screenHeight * 0.02,
-              child: Image.asset(
-                'assets/images/ellipse2.png',
-                width: screenWidth * 0.3,
-                height: screenWidth * 0.3,
-              ),
+          ),
+          Positioned(
+            left: screenWidth * -0.07,
+            top: screenHeight * 0.02,
+            child: Image.asset(
+              'assets/images/ellipse2.png',
+              width: screenWidth * 0.3,
+              height: screenWidth * 0.3,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: screenHeight * 0.140),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        "Welcome!",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      Text(
-                        "Let's get you connected to lawyers",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: BouncingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _buildCard1(screenHeight, screenWidth),
-                      _buildCard2(screenHeight, screenWidth),
-                      _buildCard3(screenHeight, screenWidth),
-                      _buildCard4(screenHeight, screenWidth),
-                      _buildCard5(screenHeight, screenWidth)
-                    ],
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02), // Added for spacing
-                // MyButton2(
-                //   onTap: signUpUser, // Set the onTap function to signUpUser
-                // ),
-                SizedBox(height: screenHeight * 0.02), // Added for spacing
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: screenHeight * 0.140),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GestureDetector(
-                      child: Text(
-                        "Already have an account?",
-                        style: TextStyle(color: Colors.black),
+                    Text(
+                      "Welcome!",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontFamily: 'Poppins',
                       ),
                     ),
-                    GestureDetector(
-                      onTap: navigateToLoginPage,
-                      child: Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 108, 9, 173),
-                          fontWeight: FontWeight.bold,
-                        ),
+                    Text(
+                      "Let's get you connected to lawyers",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildCard1(screenHeight, screenWidth),
+                    _buildCard2(screenHeight, screenWidth),
+                    _buildCard3(screenHeight, screenWidth),
+                    _buildCard4(screenHeight, screenWidth),
+                    _buildCard5(screenHeight, screenWidth)
+                  ],
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.01), // Added for spacing
+              // MyButton2(
+              //   onTap: signUpUser, // Set the onTap function to signUpUser
+              // ),
+              SizedBox(height: screenHeight * 0.01), // Added for spacing
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    child: Text(
+                      "Already have an account?",
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: navigateToLoginPage,
+                    child: Text(
+                      'Login',
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 108, 9, 173),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
 Widget _buildCard1(double screenHeight, double screenWidth) {
   return Container(
@@ -445,18 +453,20 @@ Widget _buildCard3(double screenHeight, double screenWidth) {
 Widget _buildCard4(double screenHeight, double screenWidth) {
   return Container(
     color: Colors.transparent,
-    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Wrap(
+          spacing: 1.0, // Horizontal spacing between chips
+          runSpacing: 1.0, // Vertical spacing between rows of chips
           children: preferences.map((String value) {
             return Padding(
-              padding: const EdgeInsets.all(4.0),
+              padding: const EdgeInsets.all(1.0), // Reduced padding around each chip
               child: ChoiceChip(
                 label: Text(
                   value,
-                  style: TextStyle(fontSize: 10), // Decreased chip text size
+                  style: TextStyle(fontSize: 8), // Decreased chip text size
                 ),
                 selected: selectedPreferences.contains(value),
                 onSelected: (bool selected) {
@@ -468,31 +478,31 @@ Widget _buildCard4(double screenHeight, double screenWidth) {
                     }
                   });
                 },
-                labelStyle:
-                    TextStyle(fontSize: 8), // Decreased chip label size
+                labelStyle: TextStyle(fontSize: 8), // Decreased chip label size
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce chip size
               ),
             );
           }).toList(),
         ),
         SizedBox(height: screenHeight * 0.020),
         Container(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2,
+                spreadRadius: 1,
                 blurRadius: 4,
-                offset: Offset(0, 2),
+                offset: Offset(0, 1),
               ),
             ],
           ),
           child: Row(
             children: [
               Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
-              SizedBox(width: 8), // Adding space between icon and text
+              SizedBox(width: 5), // Adding space between icon and text
               Text(
                 "Swipe Left",
                 style: TextStyle(

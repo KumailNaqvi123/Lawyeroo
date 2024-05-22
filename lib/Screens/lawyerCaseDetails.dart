@@ -2,11 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:project/Screens/editcasedetails.dart';
 import 'package:project/Screens/lawyercases.dart';
 
-class CaseDetailsPage extends StatelessWidget {
+class CaseDetailsPage extends StatefulWidget {
   final LawyerCase caseItem;
-  final String token; // Token received through constructor
+  final String token;
 
   CaseDetailsPage({required this.caseItem, required this.token});
+
+  @override
+  _CaseDetailsPageState createState() => _CaseDetailsPageState();
+}
+
+class _CaseDetailsPageState extends State<CaseDetailsPage> {
+  late LawyerCase caseItem;
+
+  @override
+  void initState() {
+    super.initState();
+    caseItem = widget.caseItem;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +30,24 @@ class CaseDetailsPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditCasePage(
-                  caseItem: caseItem,
-                  token: token, // Pass the token here
+            onPressed: () async {
+              final updatedCase = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditCasePage(
+                    caseItem: caseItem,
+                    token: widget.token,
+                  ),
                 ),
-              ),
-            ),
+              );
+
+              if (updatedCase != null) {
+                setState(() {
+                  caseItem = updatedCase;
+                });
+                Navigator.pop(context, updatedCase);  // Return the updated case
+              }
+            },
           ),
         ],
       ),
@@ -44,14 +66,8 @@ class CaseDetailsPage extends StatelessWidget {
               _buildItem('Type', caseItem.caseType),
               _buildItem('Status', caseItem.caseStatus),
               _buildItem('Details', caseItem.caseDetails),
-              _buildItem(
-                'Created At',
-                _formatDate(caseItem.createdAt),
-              ),
-              _buildItem(
-                'Updated At',
-                _formatDate(caseItem.updatedAt),
-              ),
+              _buildItem('Created At', _formatDate(caseItem.createdAt)),
+              _buildItem('Updated At', _formatDate(caseItem.updatedAt)),
             ],
           ),
         ),

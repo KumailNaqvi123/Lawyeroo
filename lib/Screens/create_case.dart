@@ -23,7 +23,24 @@ class _CaseCreationPageState extends State<CaseCreationPage> {
   String _caseDetails = '';
   String _caseType = 'Family Law'; // Default value
   String _caseStatus = 'Open'; // Default value
-  List<String> _caseTypes = ['Family Law', 'Personal Injury', 'Civil', 'Criminal'];
+  List<String> _caseTypes = [
+    "Personal Injury",
+    "Estate Planning",
+    "Bankruptcy",
+    "Intellectual Property",
+    "Employment",
+    "Corporate",
+    "Immigration",
+    "Criminal",
+    "Medical Malpractice",
+    "Tax Law",
+    "Family Law",
+    "Worker's Compensation ",
+    "Contract",
+    "Social Security Disability",
+    "Civil Litigation",
+    "General Practice"
+  ];
 
   @override
   Widget build(BuildContext context) {

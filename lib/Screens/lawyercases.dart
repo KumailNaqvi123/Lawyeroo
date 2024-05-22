@@ -113,91 +113,101 @@ class _LawyerCasesPageState extends State<LawyerCasesPage> {
   }
 
   Widget _buildCasesTab(String statusFilter) {
-  // Filter cases based on the status filter provided
-  final filteredCases = cases.where((caseItem) {
-    if (statusFilter == 'Open') {
-      // Include cases marked as 'Open' or 'In Progress'
-      return caseItem.caseStatus == 'Open' || caseItem.caseStatus == 'In Progress';
-    } else {
-      // Include cases marked as 'Completed'
-      return caseItem.caseStatus == 'Completed' || caseItem.caseStatus == 'Closed';
-    }
-  }).toList();
+    // Filter cases based on the status filter provided
+    final filteredCases = cases.where((caseItem) {
+      if (statusFilter == 'Open') {
+        // Include cases marked as 'Open' or 'In Progress'
+        return caseItem.caseStatus == 'Open' || caseItem.caseStatus == 'In Progress';
+      } else {
+        // Include cases marked as 'Completed'
+        return caseItem.caseStatus == 'Completed' || caseItem.caseStatus == 'Closed';
+      }
+    }).toList();
 
-  return SingleChildScrollView(
-    child: Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (LawyerCase caseItem in filteredCases)
-            _buildCaseCard(caseItem, statusFilter),
-        ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (LawyerCase caseItem in filteredCases)
+              _buildCaseCard(caseItem, statusFilter),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildCaseCard(LawyerCase caseItem, String statusFilter) {
-  return Card(
-    elevation: 3.0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10.0),
-    ),
-    color: Colors.white,
-    child: Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Created At: ${_formatDate(caseItem.createdAt)}',
-                style: TextStyle(color: Colors.grey),
-              ),
-              InkWell(
-                onTap: () {
-                  _navigateToCaseDetails(caseItem);
-                },
-                child: Text(
-                  'View Details',
-                  style: TextStyle(
-                    decoration: TextDecoration.underline,
-                    color: Colors.black,
+    return Card(
+      elevation: 3.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Created At: ${_formatDate(caseItem.createdAt)}',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                InkWell(
+                  onTap: () {
+                    _navigateToCaseDetails(caseItem);
+                  },
+                  child: Text(
+                    'View Details',
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            caseItem.caseName,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text('Type: ${caseItem.caseType}'),
-          Text('Status: ${caseItem.caseStatus}'),
-          Text('Details: ${caseItem.caseDetails}'),
-          SizedBox(height: 8),
-          // Removed the Row containing the dropdown menu
-        ],
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              caseItem.caseName,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('Type: ${caseItem.caseType}'),
+            Text('Status: ${caseItem.caseStatus}'),
+            Text('Details: ${caseItem.caseDetails}'),
+            SizedBox(height: 8),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-void _navigateToCaseDetails(LawyerCase caseItem) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CaseDetailsPage(
-        caseItem: caseItem,
-        token: widget.token, // Pass the token here
+  void _navigateToCaseDetails(LawyerCase caseItem) async {
+    final updatedCase = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CaseDetailsPage(
+          caseItem: caseItem,
+          token: widget.token,
+        ),
       ),
-    ),
-  );
-}
+    );
+
+    if (updatedCase != null) {
+      // Update the specific case in the list
+      setState(() {
+        final index = cases.indexWhere((c) => c.caseId == updatedCase.caseId);
+        if (index != -1) {
+          cases[index] = updatedCase;
+        }
+      });
+    }
+  }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';

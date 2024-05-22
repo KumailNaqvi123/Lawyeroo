@@ -28,7 +28,7 @@ class _HomescreenReccLawyers extends State<HomescreenReccLawyers> {
  Future<void> fetchLawyersData() async {
   try {
     final response = await http.get(
-     Uri.parse('https://2437-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommendations?client_id=${widget.userData['id']}'),
+     Uri.parse('https://3c74-154-81-228-94.ngrok-free.app/recommendations?client_id=${widget.userData['id']}'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 

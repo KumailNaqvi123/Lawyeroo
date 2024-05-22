@@ -29,14 +29,22 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
   final TextEditingController universityController = TextEditingController();
 
   List<String> specializations = [
-    'Personal Injury Law',
-    'Estate Planning Law',
-    'Bankruptcy Law',
-    'Intellectual Property Law',
-    'Employment Law',
-    'Corporate Law',
-    'Immigration Law',
-    'Criminal Law',
+    "Personal Injury Law",
+    "Estate Planning Law",
+    "Bankruptcy Law",
+    "Intellectual Property Law",
+    "Employment Law",
+    "Corporate Law",
+    "Immigration Law",
+    "Criminal Law",
+    "Medical Malpractice Law",
+    "Tax Law",
+    "Family Law",
+    "Worker's Compensation Law",
+    "Contract Law",
+    "Social Security Disability Law",
+    "Civil Litigation Law",
+    "General Practice Law"
   ];
   List<String> selectedSpecializations = [];
 
@@ -253,7 +261,7 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
                         ),
                       ),
                       Text(
-                        "Let's get you connected to lawyers",
+                        "Your Clients await you",
                         style: TextStyle(
                           fontSize: 18,
                           fontFamily: 'Poppins',
@@ -278,11 +286,11 @@ class _LawyerSignupPageState extends State<LawyerSignupPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.02), // Added for spacing
+                SizedBox(height: screenHeight * 0.01), // Added for spacing
                 // MyButton2(
                 //   onTap: signUpUser, // Set the onTap function to signUpUser
                 // ),
-                SizedBox(height: screenHeight * 0.02), // Added for spacing
+                SizedBox(height: screenHeight * 0.01), // Added for spacing
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -595,18 +603,20 @@ Widget _buildCard5(double screenHeight, double screenWidth) {
 Widget _buildCard6(double screenHeight, double screenWidth) {
   return Container(
     color: Colors.transparent,
-    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Wrap(
+          spacing: 1.0, // Horizontal spacing between chips
+          runSpacing: 1.0, // Vertical spacing between rows of chips
           children: specializations.map((String value) {
             return Padding(
-              padding: const EdgeInsets.all(4.0),
+              padding: const EdgeInsets.all(1.0), // Reduced padding around each chip
               child: ChoiceChip(
                 label: Text(
                   value,
-                  style: TextStyle(fontSize: 10), // Decreased chip text size
+                  style: TextStyle(fontSize: 8), // Decreased chip text size
                 ),
                 selected: selectedSpecializations.contains(value),
                 onSelected: (bool selected) {
@@ -618,31 +628,31 @@ Widget _buildCard6(double screenHeight, double screenWidth) {
                     }
                   });
                 },
-                labelStyle:
-                    TextStyle(fontSize: 8), // Decreased chip label size
+                labelStyle: TextStyle(fontSize: 8), // Decreased chip label size
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce chip size
               ),
             );
           }).toList(),
         ),
         SizedBox(height: screenHeight * 0.020),
         Container(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2,
+                spreadRadius: 1,
                 blurRadius: 4,
-                offset: Offset(0, 2),
+                offset: Offset(0, 1),
               ),
             ],
           ),
           child: Row(
             children: [
               Icon(Icons.arrow_back_ios), // Arrow icon pointing backward
-              SizedBox(width: 8), // Adding space between icon and text
+              SizedBox(width: 5), // Adding space between icon and text
               Text(
                 "Swipe Left",
                 style: TextStyle(
@@ -674,8 +684,8 @@ Widget _buildCard6(double screenHeight, double screenWidth) {
             _selectImage();
           },
           child: Container(
-            width: screenWidth * 0.4,
-            height: screenWidth * 0.4,
+            width: screenWidth * 0.2,
+            height: screenWidth * 0.2,
             decoration: BoxDecoration(
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(screenWidth * 0.2),
@@ -690,8 +700,8 @@ Widget _buildCard6(double screenHeight, double screenWidth) {
                     child: Image.file(
                       _image!,
                       fit: BoxFit.cover,
-                      width: screenWidth * 0.4,
-                      height: screenWidth * 0.4,
+                      width: screenWidth * 0.2,
+                      height: screenWidth * 0.2,
                     ),
                   ),
           ),

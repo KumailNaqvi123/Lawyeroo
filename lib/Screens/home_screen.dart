@@ -72,7 +72,7 @@ _fetchClientNews().then((items) {
 Future<List<ClientNewsItem>> _fetchClientNews() async {
   print(" clients id ${widget.userData['id']}");
   final response = await http.post(
-    Uri.parse('https://36fd-2400-adca-116-bd00-2531-241-d8b3-542e.ngrok-free.app/recommend_news'),
+    Uri.parse('https://6cb0-154-81-228-94.ngrok-free.app/recommend_news'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({'user_id': widget.userData['id']}),
   );
@@ -91,7 +91,7 @@ Future<List<ClientNewsItem>> _fetchClientNews() async {
 Future<void> _fetchLawyersData() async {
   try {
     final response = await http.get(
-      Uri.parse('http://3.144.71.210:8000/recommendations?client_id=${GlobalData().userData['id']}'),
+      Uri.parse('https://3c74-154-81-228-94.ngrok-free.app/recommendations?client_id=${GlobalData().userData['id']}'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 

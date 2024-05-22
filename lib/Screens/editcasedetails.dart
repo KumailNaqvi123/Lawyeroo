@@ -64,53 +64,67 @@ class _EditCasePageState extends State<EditCasePage> {
     );
   }
 
-Widget _buildDropdown(String label, TextEditingController controller) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: DropdownButtonFormField<String>(
-      value: controller.text,
-      onChanged: (newValue) {
-        setState(() {
-          controller.text = newValue!;
-        });
-      },
-      items: <String>['Open', 'Closed'].map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(),
+  Widget _buildDropdown(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        value: controller.text,
+        onChanged: (newValue) {
+          setState(() {
+            controller.text = newValue!;
+          });
+        },
+        items: <String>['Open', 'Closed'].map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(),
+        ),
       ),
-    ),
-  );
-}
-
- void _updateCase() async {
-  var response = await http.put(
-    Uri.parse('${GlobalData().baseUrl}/api/cases/${widget.caseItem.caseId}'),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ${widget.token}',
-    },
-    body: jsonEncode({
-      'case_name': _nameController.text,
-      'case_details': _detailsController.text,
-      'case_status': _statusController.text,
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    // Handle success
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update Successful')));
-    Navigator.pop(context);
-  } else {
-    // Handle error
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update')));
+    );
   }
-}
+
+  void _updateCase() async {
+    var response = await http.put(
+      Uri.parse('${GlobalData().baseUrl}/api/cases/${widget.caseItem.caseId}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+      body: jsonEncode({
+        'case_name': _nameController.text,
+        'case_details': _detailsController.text,
+        'case_status': _statusController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // Handle success
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update Successful')));
+
+      // Create the updated case object
+      LawyerCase updatedCase = LawyerCase(
+        caseId: widget.caseItem.caseId,
+        clientId: widget.caseItem.clientId,
+        lawyerId: widget.caseItem.lawyerId,
+        caseName: _nameController.text,
+        caseDetails: _detailsController.text,
+        caseType: widget.caseItem.caseType,
+        createdAt: widget.caseItem.createdAt,
+        updatedAt: DateTime.now(),
+        caseStatus: _statusController.text,
+      );
+
+      Navigator.pop(context, updatedCase);
+    } else {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update')));
+    }
+  }
 
   @override
   void dispose() {
@@ -119,8 +133,4 @@ Widget _buildDropdown(String label, TextEditingController controller) {
     _statusController.dispose();
     super.dispose();
   }
-
-
-
-
 }
