@@ -1,16 +1,36 @@
-# project
+# Lawyeroo
 
-A new Flutter project.
+Lawyeroo is a comprehensive legal assistance application designed to help individuals and businesses manage their legal needs efficiently. Whether you need to draft legal documents, get legal advice, or manage case files, Lawyeroo is here to simplify your legal tasks.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- **Communication**: Communicate with the lawyers on QNA or by directly messaging them
+- **Legal Advice**: Connect with professional lawyers for advice and consultations.
+- **Appointment Management**: Manage your appointment with lawyer as a client or vice versa with our easy to follow planning tool
+- **Case Management**: Organize and manage your legal cases and client information.
+- **Research Tools**: Access a vast library of legal resources and research tools.
+- **Lawyer Procurement**:Hire lawyers based on parameters such as price,location,rating etc.
 
-A few resources to get you started if this is your first Flutter project:
+## Installation
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+To install Lawyeroo, follow these steps:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/KumailNaqvi123/lawyeroo.git
+    ```
+
+2. Navigate to the project directory:
+    ```sh
+    cd lawyeroo
+    ```
+
+3. Install the required dependencies:
+    ```sh
+    flutter pub get
+    ```
+
+4. Start the application after attaching your phone or Android Virtual Device(AVD) using:
+    ```sh
+    flutter run
+    ```
